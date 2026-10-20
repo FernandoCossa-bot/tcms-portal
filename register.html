@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Request an Account | TCMS</title>
+  <link rel="stylesheet" href="./css/styles.css">
+  <script src="./js/ui.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body data-page="register">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header><p>TCMS</p><p>Tzu Chi Mozambique System</p></header>
+  <main id="main-content" tabindex="-1">
+    <h1>Create your TCMS account</h1>
+    <p>Confirm your email, then wait for administrator approval.
+      Registration does not grant access to modules.</p>
+    <p id="auth-status" role="status" aria-live="polite">Connecting to TCMS…</p>
+    <section id="registration" hidden aria-label="Account registration">
+      <p id="registration-status" role="status" aria-live="polite"></p>
+      <form id="registration-form" method="post" aria-describedby="registration-status">
+        <fieldset disabled>
+          <legend>Your details</legend>
+          <p><label for="register-name">Full name</label>
+            <input id="register-name" name="display_name" autocomplete="name" maxlength="120" required></p>
+          <p><label for="register-email">Email address</label>
+            <input id="register-email" name="email" type="email"
+              autocomplete="email" autocapitalize="none" spellcheck="false" required></p>
+          <p><label for="register-password">Password (at least 12 characters)</label>
+            <input id="register-password" name="password" type="password"
+              autocomplete="new-password" minlength="12" required></p>
+          <p><label for="register-confirm">Confirm password</label>
+            <input id="register-confirm" name="confirm_password" type="password"
+              autocomplete="new-password" minlength="12" required></p>
+          <button type="submit">Request account</button>
+        </fieldset>
+      </form>
+    </section>
+    <div id="session-actions" hidden>
+      <button id="check-access" type="button">Check access</button>
+      <button id="sign-out" type="button">Sign out</button>
+    </div>
+    <p><a href="./index.html">Back to sign in</a></p>
+    <noscript>Enable JavaScript to request an account.</noscript>
+  </main>
+  <footer><p>TCMS · Tzu Chi Mozambique System</p></footer>
+</body>
+</html>

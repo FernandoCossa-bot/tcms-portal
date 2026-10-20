@@ -1,101 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta
-      name="description"
-      content="TCMS is the shared entry point for the Tzu Chi Mozambique System."
-    >
-    <title>Sign In | TCMS</title>
-    <link rel="stylesheet" href="./css/styles.css">
-    <script type="module" src="./js/app.js"></script>
-  </head>
-  <body class="auth-page">
-    <a class="skip-link" href="#main-content">Skip to main content</a>
-
-    <header class="site-header">
-      <div class="brand" aria-label="TCMS — Tzu Chi Mozambique System">
-        <div class="brand-copy">
-          <p class="brand-name">TCMS</p>
-          <p class="brand-description">Tzu Chi Mozambique System</p>
-        </div>
-      </div>
-    </header>
-
-    <main id="main-content" class="auth-layout" tabindex="-1">
-      <section class="auth-card" aria-labelledby="sign-in-title">
-        <h1 id="sign-in-title">Sign in to TCMS</h1>
-        <p class="auth-introduction">
-          Use your account to access the modules assigned to you.
-        </p>
-
-        <p class="notice notice-info" id="sign-in-status" role="status">
-          Sign-in is currently unavailable.
-        </p>
-
-        <!-- Enable this form only after real authentication is implemented. -->
-        <form
-          id="sign-in-form"
-          class="auth-form"
-          method="post"
-          aria-describedby="sign-in-status"
-        >
-          <fieldset disabled>
-            <legend>Account credentials</legend>
-
-            <div class="form-field">
-              <label for="email">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autocomplete="username"
-                autocapitalize="none"
-                spellcheck="false"
-                required
-              >
-            </div>
-
-            <div class="form-field">
-              <label for="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                required
-              >
-            </div>
-
-            <button class="button button-primary" type="submit">
-              Sign in
-            </button>
-          </fieldset>
-        </form>
-
-        <p class="access-note">
-          Access is managed by authorized Tzu Chi Mozambique administrators.
-        </p>
-      </section>
-
-      <aside class="auth-context" aria-labelledby="platform-title">
-        <p class="eyebrow">Tzu Chi Mozambique</p>
-        <h2 id="platform-title">Supporting our daily operations</h2>
-        <p>
-          A shared workspace for Tzu Chi Mozambique's administrative
-          information, training, logistics and farm operations.
-        </p>
-        <ul class="platform-principles">
-          <li>Access based on assigned permissions.</li>
-          <li>Consistent navigation between modules.</li>
-          <li>Clear account and module status.</li>
-        </ul>
-      </aside>
-    </main>
-
-    <footer class="site-footer">
-      <p>TCMS · Tzu Chi Mozambique System</p>
-    </footer>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Sign In | TCMS</title>
+  <link rel="stylesheet" href="./css/styles.css">
+  <script src="./js/ui.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body data-page="login">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header><p>TCMS</p><p>Tzu Chi Mozambique System</p></header>
+  <main id="main-content" tabindex="-1">
+    <h1>Sign in to TCMS</h1>
+    <p>Use your account to access your workspace.</p>
+    <p id="auth-status" role="status" aria-live="polite">Connecting to TCMS…</p>
+    <form id="sign-in-form" method="post" aria-describedby="auth-status">
+      <fieldset disabled>
+        <legend>Account credentials</legend>
+        <p><label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="username"
+            autocapitalize="none" spellcheck="false" required></p>
+        <p><label for="password">Password</label>
+          <input id="password" name="password" type="password"
+            autocomplete="current-password" required></p>
+        <button type="submit">Sign in</button>
+      </fieldset>
+    </form>
+    <p id="register-link"><a href="./register.html">Request an account</a></p>
+    <div id="session-actions" hidden>
+      <button id="check-access" type="button">Check access</button>
+      <button id="sign-out" type="button">Sign out</button>
+    </div>
+    <noscript>Enable JavaScript to sign in.</noscript>
+  </main>
+  <footer><p>TCMS · Tzu Chi Mozambique System</p></footer>
+</body>
 </html>

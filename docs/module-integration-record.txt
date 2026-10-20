@@ -1,0 +1,105 @@
+TCMS — User permissions and integrated transport
+Project: tcms-portal (yvrrfedbaugqfgrvnmar)
+Implementation and verification: 21 October 2026
+
+DELIVERED
+1. User management now includes a paginated account directory and transport permissions.
+   Profiles: no access, viewer, requester, dispatcher.
+   Individual settings: use role default, allow, deny.
+   Actions: open transport, create requests, edit requests, approve/complete,
+   manage vehicles, view all requests instead of only one's own.
+2. Only active accounts can receive module permissions.
+   Users cannot change their own permissions. The System Owner is protected.
+   Restricted administrators cannot change platform administrators and cannot
+   delegate permissions they do not hold. Platform roles are not changed here.
+3. Transport is a separate page reached from the homepage using the existing login.
+   Vehicle registration/edit: unique registration, name/model, capacity, mileage,
+   operational status.
+   Request creation/edit: assigned vehicle, destination, purpose, passenger count,
+   departure and return in Mozambique time, status.
+   New requests start pending. Closed requests cannot be edited.
+   Requesters edit their own pending requests and may cancel them.
+   Approval/completion requires explicit permission.
+4. Backend checks reject overlapping active reservations, excess passenger count,
+   unavailable vehicles, invalid dates, stale versions and unauthorized actions.
+   The global access switch also applies to transport, except for the active,
+   verified System Owner.
+5. Permission changes and transport writes generate audit events atomically.
+
+SECURITY IMPLEMENTATION
+RLS = Row Level Security / Seguranca ao Nivel das Linhas.
+Enabled on the three new public tables. Direct access by public clients is revoked;
+without a policy, access remains denied. This is intentional, not an omitted policy.
+RPC = Remote Procedure Call / Chamada de Procedimento Remoto.
+The client calls tcms_api; no raw database queries are embedded in HTML/JavaScript.
+The public wrapper runs as its caller. A non-exposed implementation schema contains
+the privileged operation dispatcher, with explicit identity, account, global access,
+permission and row-ownership checks. Helpers cannot be called directly by clients.
+No secret key or database password was added to the website.
+The Supabase Advisor was reviewed. Unnecessary public/anonymous/authenticated
+EXECUTE privileges on the internal rls_auto_enable() event-trigger function
+were revoked; its automatic-RLS definition was preserved.
+Remaining Advisor notices include intentionally policy-free, inaccessible tables
+and existing identity RPCs with explicit authorization guards.
+Leaked-password protection is currently disabled in Auth and remains a hardening
+item before broad public rollout; it was not silently enabled or a plan upgraded.
+
+VERIFIED
+- Existing mocked regression suites: navigation, pending-account review, owner switch.
+- JavaScript syntax and Git whitespace checks.
+- Mozambique date conversions independent of browser timezone.
+- Live database transaction tests before and after installation:
+  anonymous function privilege denied, direct table privilege denied, RLS enabled;
+  vehicle creation; request creation and editing; vehicle/request joined display;
+  overlapping reservation rejected; capacity exceeded rejected; stale edit rejected;
+  unassigned member denied; member directory denied; requester fleet management denied;
+  other user's request hidden and editing refused; requester approval refused;
+  member global switch refused; global block applies to member but not Owner;
+  individual deny overrides role; restricted administrator cannot alter Owner;
+  suspended account denied; audit events present.
+  Identities were simulated in a transaction using existing owner/member identifiers.
+  Fixtures, status changes and temporary grants were rolled back.
+- Live anonymous HTTP requests returned 401 for the new function, requests table
+  and permission table.
+- Browser using the existing Owner session:
+  directory and individual controls rendered;
+  saving the existing member's "No access" setting succeeded with an audit record;
+  homepage transport link and authenticated vehicle/request reads worked;
+  invalid zero capacity was refused by form validation; no vehicle was saved.
+
+UNCHANGED / LIMITS
+- Existing transport project and its records were not modified or imported.
+- The integrated transport database starts empty; add real vehicles before requests.
+- The existing member remains without transport access. No new accounts were created.
+- No permanent global block was enabled.
+- Custom email delivery/recovery remains deferred as previously agreed.
+- Department-specific scoping, import of old transport records, other business modules,
+  platform-role provisioning UI, health dashboard and backup/restore drills are not
+  delivered by this change.
+- No claim of a full independent security audit, load test or simultaneous-browser
+  concurrency test. Reservation serialization is implemented and sequential conflict
+  tests passed; real multi-session concurrency remains additional testing.
+- No lasting transport records were created through the browser. Actual write and edit
+  functions were exercised in the rollback database tests.
+- Files were installed in the local TCMM PORTAL project. No Git commit/push or public
+  website deployment was performed in this work.
+
+FILES
+js/modules.js, js/transport.js, transport.html
+Updated js/app.js, home.html, users.html
+supabase/migrations/20261020220942_module_permissions_transport.sql
+supabase/migrations/20261020231514_restrict_automatic_rls_function.sql
+tests/database-acceptance.sql, tests/public-access.test.cjs
+The database update was applied via the SQL Editor, not the CLI migration-history
+mechanism. Do not blindly run it again: existing objects cause a safe failure.
+Database acceptance tests assume the selected test member has no module access and
+the global switch is enabled. Review fixture identifiers before running elsewhere.
+
+HOW TO USE
+1. Sign in as System Owner.
+2. Home > Manage users > User permissions.
+3. Choose a transport profile, adjust individual settings, enter a reason and save.
+4. Home > Open Transport > Register vehicle.
+5. Create a request for an available vehicle; use Edit request to change its details
+   or status according to the signed-in user's permissions.
+6. Check access refreshes the current authorization state.

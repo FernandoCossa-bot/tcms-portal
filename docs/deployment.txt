@@ -1,0 +1,26 @@
+TCMS publication configuration — 21 October 2026
+
+Repository: https://github.com/FernandoCossa-bot/tcms-portal
+Website target: https://fernandocossa-bot.github.io/tcms-portal/
+
+The Publish TCMS workflow runs regression tests and scans public files before
+publishing a strict allowlist of five HTML pages, CSS and application JavaScript.
+Database migrations, tests and internal project documentation are not in the
+website artifact. SQL migrations remain in the source repository for traceability;
+they are not executed in HTML, CSS or JavaScript.
+
+js/config.js intentionally contains only the project URL and publishable key.
+These are public browser configuration, not administrative credentials.
+Never add a secret key, service-role credential, database password or user token.
+Private environment files and credential files remain ignored by Git.
+
+Website navigation uses relative paths, preserving the /tcms-portal/ base path.
+Authentication and authorization remain enforced by Supabase, with existing
+Row Level Security (RLS / Seguranca ao Nivel das Linhas) and Remote Procedure
+Call (RPC / Chamada de Procedimento Remoto) checks. Publication does not grant
+accounts any additional permission.
+
+Previous implementation report describes testing before publication. Its final
+statement that no push/deployment occurred refers to that earlier task only.
+Custom email delivery/recovery and leaked-password protection remain pending.
+Public deployment does not certify a complete security audit or all product scope.

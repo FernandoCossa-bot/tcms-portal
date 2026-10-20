@@ -6,6 +6,8 @@
 # Deployment configuration
 config.js
 config.local.js
+# This specific file contains only reviewed public browser configuration.
+!js/config.js
 
 # Dependencies and generated files
 node_modules/

@@ -1,0 +1,49 @@
+TCMS implementation and verification status — 21 October 2026
+
+LOCAL CHANGES IN THIS SESSION
+- Responsive blue/green/white styling and System/Light/Dark appearance control.
+- Owner-only global access control UI, using existing functions from migration 001.
+- Own display-name editing, using the existing profile update function.
+- Existing login, registration, homepage and approval pages preserved.
+- Password/email delivery settings unchanged.
+- No Git commit or push. No remote account state changed in this session.
+
+EVIDENCE
+- JavaScript syntax checks passed.
+- Mock tests passed: navigation and role guards; approve/reject payloads;
+  stale decision handling; owner-only switch rendering; reason validation;
+  expected version included; own name update and sensitive content cleanup.
+- Live browser: unauthenticated home.html and users.html redirect to login.
+- Live browser: Owner identity recognized; pending directory reads successfully.
+- Live browser: no pending ordinary accounts at the time of inspection.
+- Live browser: Owner access-setting read succeeds, showing enabled.
+- Live HTTP: anonymous calls to core_get_my_context,
+  core_list_pending_accounts, core_get_access_control all return 401.
+- Light theme visually checked on User Management, dark theme on login.
+- Prior user screenshot confirms an approved Member can enter the homepage.
+
+NOT PROVEN
+- Actual rejection of a pending identity in a signed-in browser.
+- Actual Owner global switch write, cross-user denial, and restoration.
+- Current database deployment and complete backend authorization tests cannot
+  be inspected through the Supabase connector: project access returned denied.
+- Mock tests do not establish database security.
+- No mobile viewport or screen-reader conformance claim.
+
+REMAINING SCOPE BEFORE THE COMPLETE PLANNED SYSTEM
+- Per-user module grants, role defaults/allow/deny and scope enforcement.
+- Safe platform-role delegation and account suspension/reactivation UI.
+- Shared-identity transport integration with backend add/edit permissions.
+- Audit-history viewer, module catalogue and real health checks.
+- Deployment configuration and publication of this new version.
+- Email registration/recovery remains explicitly deferred.
+
+NEXT AUTHORITY/ENVIRONMENT REQUIREMENT
+Connect Supabase access authorized for project yvrrfedbaugqfgrvnmar,
+or have the project owner execute reviewed migrations and diagnostics.
+Never share a database password or service-role key in chat/browser source.
+
+Run local tests from the project directory:
+node tests/navigation.test.cjs ../js/app.js
+node tests/users.test.cjs ../js/users.js
+node tests/home-tools.test.cjs ../js/home-tools.js

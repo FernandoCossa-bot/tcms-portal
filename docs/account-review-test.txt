@@ -1,0 +1,66 @@
+TCMS account review — installation and acceptance record
+
+Implementation
+- users.html: separate administrator page with pending accounts.
+- users.js: RPC-only list and approve/reject requests; no browser SQL.
+- app.js: role-aware navigation and sensitive-content cleanup.
+- 003_account_review.sql: ordinary pending-account list and decision functions.
+- SMTP/email setup remains deferred. No Auth settings were changed.
+
+Permissions
+- Only active, email-confirmed System Owners and Restricted Administrators
+  may call these functions. Restricted Administrators cannot act under the
+  global access block; the existing Owner exception is retained.
+- Only pending ordinary accounts can be reviewed; self-review and targets
+  with any platform-role assignment are denied.
+- Approval requires verified email. It activates the profile, not module access.
+- Rejection sets rejected; it does not delete the Auth identity.
+- Both decisions require a reason. Actor, target and reason are audited
+  in the same transaction as the status change.
+- A row lock and expected updated_at prevent duplicate/stale decisions.
+- The directory is paginated, 20 visible records per page plus one lookahead.
+- Existing default-deny RLS/table grants remain unchanged.
+- SECURITY DEFINER functions check authorization explicitly; their owner
+  privileges are not a substitute for these checks.
+- Future role-assignment functions must respect the role-table locking contract.
+
+Installation (not yet performed)
+1. Confirm Supabase project tcms-portal.
+2. Create query "003 - Account Review".
+3. Run the COMPLETE 003_account_review.sql file once.
+4. Expect two rows, anonymous_execute=false, authenticated_execute=true.
+   This grants authenticated users permission to call the function, not permission
+   to approve: the function itself rejects non-administrators.
+5. Reload the local TCMS website. As Owner, open Manage users.
+6. An empty list is correct if no ordinary pending accounts exist.
+
+Manual acceptance tests (all pending)
+[ ] New controlled test identity creates a pending profile.
+[ ] Owner can list pending ordinary accounts.
+[ ] Unconfirmed email cannot be approved, even with a direct RPC call.
+[ ] Blank/short reason cannot save.
+[ ] Cancel confirmation causes no write.
+[ ] Approve a verified pending account; status becomes active.
+[ ] Approved user can enter the homepage but has no automatic module access.
+[ ] Reject a second account; it remains unable to enter the homepage.
+[ ] Decision audit entries contain actor, target, reason and status.
+[ ] Repeated/stale decision is rejected.
+[ ] Member, anonymous, pending and suspended actors cannot call review/list RPCs.
+[ ] Restricted Administrator cannot review self or any administrator.
+[ ] Global block denies Restricted Administrator review but permits Owner.
+[ ] Logout removes the directory from view.
+[ ] Direct users.html navigation by a member does not display the directory.
+
+Testing notes
+- From the project directory:
+  node tests/navigation.test.cjs ../js/app.js
+  node tests/users.test.cjs ../js/users.js
+- Syntax checks and mocked frontend tests passed.
+- Mock tests cover routing, RPC payloads, safe text rendering, stale responses,
+  and list cleanup; they do NOT prove database authorization or real network flows.
+- SQL runtime and role-based tests must run in Supabase before completion.
+- For controlled manual test identities only, use administrative email
+  confirmation if appropriate. Never disable global email confirmation.
+- Do not use the Owner as the approval/rejection test target.
+- Public registration/email delivery, password recovery, module assignments,
+  account suspension UI and platform-role delegation are still outside this increment.

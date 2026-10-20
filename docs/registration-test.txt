@@ -1,0 +1,32 @@
+TCMS registration — configuration and acceptance checks
+
+Implemented locally; no Supabase settings were changed automatically.
+Syntax checks and mocked signup checks passed. Live email delivery and pending
+account verification remain untested.
+
+Before testing:
+1. Open TCMS through Live Server. Copy its actual index.html URL.
+2. Supabase Authentication / URL Configuration: add that exact URL to Redirect
+   URLs. Keep the same hostname and port during testing. Avoid broad wildcards.
+3. Keep email confirmations enabled.
+4. Check SMTP delivery configuration. The default Supabase email service only
+   sends to project team addresses and is rate-limited. Configure custom SMTP
+   before inviting ordinary users; never put SMTP secrets in browser files.
+5. Configure matching server-side password requirements. The form currently
+   enforces 12 characters, but browser validation is not a security boundary.
+
+Test with a separate controlled mailbox, not the existing Owner:
+[ ] Signed-out user sees Request an account.
+[ ] Mismatched passwords are rejected.
+[ ] Registration succeeds and confirmation email arrives.
+[ ] Confirmation returns to the exact allowed local URL.
+[ ] Account remains pending; module access is denied.
+[ ] Auth metadata contains no effective role or approval selection.
+[ ] Repeated/existing addresses receive no private account details.
+[ ] Owner can still sign in and sign out.
+[ ] Expired confirmation link does not grant access.
+
+Public deployment remains gated on real SMTP delivery testing, server-side
+rate limits and an abuse-control review (including CAPTCHA when appropriate).
+The local cooldown is only a usability aid, not an anti-abuse security control.
+Approval UI and module assignment are a later increment.

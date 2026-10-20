@@ -1,0 +1,64 @@
+TCMS — Identity foundation, migration 001
+
+STATUS
+Prepared, not executed in Supabase. Runtime and authorization tests pending.
+This is the first database increment, not the complete authorization system.
+
+INSTALLATION
+1. Open the NEW Supabase project tcms-portal, reference yvrrfedbaugqfgrvnmar.
+2. Open a new SQL Editor query.
+3. Paste the COMPLETE 001_identity_foundation.sql file, without Markdown fences.
+4. Run the complete script once. Do not run the old transport script.
+5. Expect four report rows: RLS enabled true; all displayed access flags false.
+6. Save the result. Stop on any error and report it before continuing.
+7. Do not rerun a successful migration. Future changes use new migrations.
+The transaction rolls back the schema changes on error; existing objects are
+not dropped or overwritten. SQL belongs here, never in browser JavaScript.
+
+WHAT THIS ADDS
+- core_profiles: pending account profile for each Auth identity.
+- core_platform_roles: protected owner/restricted administrator assignments.
+- core_system_settings: one global access switch with a concurrency version.
+- core_audit_events: application changes, not passwords or tokens.
+- Signup trigger: copies only display name; never trusts metadata for roles.
+- Four authenticated RPCs: own context, own display-name update,
+  owner switch inspection and owner switch update.
+- RLS enabled with default denial and direct browser privileges revoked.
+  There are deliberately no direct-table policies yet. SECURITY DEFINER RPCs
+  explicitly enforce authorization; RLS alone does not secure these RPCs.
+
+IMPORTANT BOUNDARIES
+- No account is made owner automatically. First-owner bootstrap is a separate
+  reviewed database-administrator step after the owner registers/verifies email.
+- No public RPC can activate an account or change platform roles in this increment.
+- Pending/suspended users may read only their own onboarding context via RPC.
+- A global block denies protected operations, not Auth sign-in or password reset.
+- The owner must still be active and email verified to bypass the global block.
+- This switch does not protect the old transport project. Future module RPCs
+  must enforce the same checks before that module is considered integrated.
+- Module assignments, per-user allow/deny/default options, departments, approval
+  RPCs, restricted-admin delegation and the administration UI are NOT built yet.
+- Successful changes are audited atomically. Denied attempts are not persisted
+  in this audit table; operational failure logging remains a separate task.
+- Direct infrastructure/database administrators remain separately privileged.
+- Deleting an Auth identity with an existing profile is restricted intentionally.
+- No application capability grants access to the Supabase dashboard.
+
+VERIFICATION CHECKLIST
+[ ] Migration runs successfully in the intended project.
+[ ] Four tables have RLS and no direct anon/authenticated data access.
+[ ] Unauthenticated calls to each RPC are rejected.
+[ ] New registration creates exactly one pending profile and no platform role.
+[ ] Spoofed signup role/status metadata cannot grant access.
+[ ] Pending user can read own context but cannot update profile.
+[ ] Verified active member can update own name; cannot change another account.
+[ ] Active member cannot read or modify owner access controls.
+[ ] Owner bootstrap performed using an explicitly verified Auth user ID.
+[ ] Active verified owner can disable and re-enable access with an audit event.
+[ ] Global block prevents member writes, including from an already-open session.
+[ ] Owner remains able to re-enable access.
+[ ] Stale settings version is rejected.
+[ ] Suspended/rejected/unverified accounts cannot perform protected writes.
+[ ] Browser integration works; no raw SQL appears in HTML or JS.
+Do not mark tests passed based only on SQL Editor success: SQL Editor runs with
+administrative privileges, unlike a browser user's session.
