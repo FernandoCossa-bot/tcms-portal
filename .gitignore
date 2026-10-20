@@ -1,0 +1,24 @@
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Deployment configuration
+config.js
+config.local.js
+
+# Dependencies and generated files
+node_modules/
+dist/
+coverage/
+*.log
+
+# Local editor and operating-system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Private credentials
+credentials*
+*.pem
+*.key

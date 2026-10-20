@@ -1,0 +1,30 @@
+/* Keep the keyboard shortcut available without showing it above the header. */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  color: #ffffff;
+  background: #175cd3;
+  border-radius: 0.5rem;
+  outline: 3px solid #172b4d;
+  outline-offset: 3px;
+}
