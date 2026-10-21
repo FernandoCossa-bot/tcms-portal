@@ -89,7 +89,9 @@ async function checkAccess() {
     status.textContent = "Your account is active.";
     if (manageUsersLink) manageUsersLink.hidden = !administrator;
     if (page === "users") await userManagement.showUsers(client);
-    if (page === "home") await homeTools?.showHomeTools(client, context);
+    if (["home", "users"].includes(page)) await homeTools?.showHomeTools(client, context, {
+      platform: page === "users", compact: page === "home",
+    });
     if (request === generation) await modules?.showModules(client, context, page);
   } catch {
     if (request === generation) {
@@ -145,7 +147,7 @@ async function initialize() {
     // Import registration only where its form exists.
     if (page === "register") registration = await import("./registration.js");
     if (page === "users") userManagement = await import("./users.js");
-    if (page === "home") homeTools = await import("./home-tools.js");
+    if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js");
     if (protectedPage) modules = await import("./modules.js");
     const [config, library] = await Promise.all([
       import("./config.js"),

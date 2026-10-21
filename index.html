@@ -12,9 +12,17 @@
 <body data-page="login">
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <header><p>TCMS</p><p>Tzu Chi Mozambique System</p></header>
+  <aside class="auth-story" aria-label="About TCMS">
+    <p class="eyebrow">TZU CHI MOZAMBIQUE</p>
+    <h2>Connected teams.<br>Meaningful impact.</h2>
+    <p>A shared workspace for the people supporting our daily operations.</p>
+    <div class="orbit-art" aria-hidden="true"><span class="orbit-ring"></span><span class="orbit-ring second"></span><span class="orbit-center">TCMS</span><span class="orbit-point one"></span><span class="orbit-point two"></span><span class="orbit-point three"></span></div>
+    <div class="story-foot"><span>One platform</span><span>Purposeful collaboration</span></div>
+  </aside>
   <main id="main-content" tabindex="-1">
-    <h1>Sign in to TCMS</h1>
-    <p>Use your account to access your workspace.</p>
+    <p class="eyebrow">WELCOME TO TCMS</p>
+    <h1>Welcome back.</h1>
+    <p class="page-intro">Sign in to access your authorized workspace.</p>
     <p id="auth-status" role="status" aria-live="polite">Connecting to TCMS…</p>
     <form id="sign-in-form" method="post" aria-describedby="auth-status">
       <fieldset disabled>
@@ -25,7 +33,7 @@
         <p><label for="password">Password</label>
           <input id="password" name="password" type="password"
             autocomplete="current-password" required></p>
-        <button type="submit">Sign in</button>
+        <button type="submit">Sign in securely <span aria-hidden="true">→</span></button>
       </fieldset>
     </form>
     <p id="register-link"><a href="./register.html">Request an account</a></p>

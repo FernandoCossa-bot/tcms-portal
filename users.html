@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>User Management | TCMS</title>
+  <title>System Administration | TCMS</title>
   <link rel="stylesheet" href="./css/styles.css">
   <script src="./js/ui.js"></script>
   <script type="module" src="./js/app.js"></script>
@@ -15,8 +15,12 @@
   <main id="main-content" tabindex="-1">
     <p id="auth-status" role="status" aria-live="polite">Checking access…</p>
     <section id="workspace" hidden aria-labelledby="users-title">
-      <h1 id="users-title">User management</h1>
+      <p class="eyebrow">SYSTEM ADMINISTRATION</p>
+      <h1 id="users-title">People, permissions &amp; platform</h1>
+      <p class="page-intro">Manage account approvals and module access in one place.</p>
       <p id="account-summary"></p>
+      <nav class="section-nav" aria-label="Administration sections"><a href="#approvals">Account approvals</a><a href="#permissions">Module permissions</a><a href="#account-settings">Account &amp; platform</a></nav>
+      <section id="approvals" class="admin-section">
       <h2>Pending accounts</h2>
       <p>Approval activates the account. It does not grant module access.
         A confirmed email is required for approval.</p>
@@ -27,9 +31,12 @@
         <button id="previous-users" type="button">Previous</button>
         <button id="next-users" type="button">Next</button>
       </p>
+      </section>
+      <section id="permissions" class="admin-section">
       <h2>User permissions</h2>
       <p>Platform roles and the System Owner are protected. Transport permissions apply only to this module.</p>
       <div id="module-content"></div>
+      </section>
     </section>
     <div id="session-actions" hidden>
       <button id="check-access" type="button">Check access</button>

@@ -11,11 +11,13 @@ export function clearHomeTools() {
   container?.remove();
   container = null;
 }
-export async function showHomeTools(client, context) {
+export async function showHomeTools(client, context, { platform = true, compact = false } = {}) {
   clearHomeTools();
   const request = generation;
-  container = node("div");
-  container.className = "workspace-tools";
+  container = node(compact ? "details" : "div");
+  container.id = "account-settings";
+  container.className = compact ? "account-disclosure" : "workspace-tools";
+  if (compact) container.append(node("summary", "My account settings"));
   document.querySelector("#workspace").append(container);
   const profile = node("section");
   profile.className = "tool-card";
@@ -52,7 +54,7 @@ export async function showHomeTools(client, context) {
       if (request === generation) feedback.textContent = "Unable to confirm the change. Select Check access before retrying.";
     } finally { if (request === generation) save.disabled = false; }
   });
-  if (context.platform_role !== "system_owner") return;
+  if (!platform || context.platform_role !== "system_owner") return;
   const control = node("section");
   control.className = "tool-card";
   control.append(node("h2", "Platform access"),

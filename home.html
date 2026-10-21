@@ -16,17 +16,17 @@
     <p id="auth-status" role="status" aria-live="polite">Checking access…</p>
     <!-- No user data is included in the static HTML. Backend checks remain mandatory. -->
     <section id="workspace" hidden aria-labelledby="home-title">
-      <h1 id="home-title">Welcome to TCMS</h1>
+      <p class="eyebrow">YOUR WORKSPACE</p>
+      <h1 id="home-title">Where would you like to work today?</h1>
+      <p class="page-intro">One shared platform for Tzu Chi Mozambique. Choose a module to get started.</p>
       <p id="account-summary"></p>
-      <p id="manage-users-link" hidden><a href="./users.html">Manage users</a></p>
-      <h2>Your modules</h2>
-      <div id="module-content"></div>
+      <div class="section-heading"><h2>Your modules</h2><span>Access tailored to your account</span></div>
+      <div id="module-content" class="module-grid"></div>
     </section>
     <div id="session-actions" hidden>
       <button id="check-access" type="button">Check access</button>
       <button id="sign-out" type="button">Sign out</button>
     </div>
-    <p><a href="./index.html">Back to sign in</a></p>
     <noscript>Enable JavaScript to verify your access.</noscript>
   </main>
   <footer><p>TCMS · Tzu Chi Mozambique System</p></footer>

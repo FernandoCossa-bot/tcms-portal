@@ -43,6 +43,32 @@ export function field(form, name, labelText, options = {}) {
 }
 let epoch = 0;
 let root;
+export function renderPortal(target, permissions, context) {
+  const administrator = ["system_owner", "restricted_admin"].includes(context.platform_role);
+  const addCard = (kind, title, description, href, tags) => {
+    const card = node("a"); card.className = `module-card ${kind}`; card.href = href;
+    const top = node("div"); top.className = "module-card-top";
+    const icon = node("span"); icon.className = `module-icon ${kind}`; icon.setAttribute("aria-hidden", "true");
+    const enter = node("span", "Open module ↗"); enter.className = "module-enter";
+    top.append(icon, enter);
+    const heading = node("h3", title);
+    const text = node("p", description);
+    const footer = node("div"); footer.className = "module-card-footer";
+    for (const tag of tags) footer.append(node("span", tag));
+    card.append(top, heading, text, footer); target.append(card);
+  };
+  if (permissions.view) addCard("transport", "Transportation",
+    "Plan journeys, coordinate requests and keep your fleet organized. Your permissions guide the actions available to you.",
+    "./transport.html", ["Fleet & vehicles", "Transport requests"]);
+  if (administrator) addCard("administration", "System Administration",
+    "Manage account approvals, assign module permissions and oversee access to the shared platform.",
+    "./users.html", ["People & permissions", context.platform_role === "system_owner" ? "Platform controls" : "Delegated administration"]);
+  if (!permissions.view && !administrator) {
+    const empty = node("section"); empty.className = "empty-modules";
+    empty.append(node("h3", "Your workspace is ready."), node("p", "No modules assigned. Contact an administrator to request access. Modules will appear here once your access is granted."));
+    target.append(empty);
+  }
+}
 export function clearModules() {
   epoch++;
   root?.replaceChildren();
@@ -60,11 +86,7 @@ export async function showModules(client, context, page) {
     if (current !== epoch) return;
     message.textContent = "";
     if (page === "home") {
-      if (permissions.view) {
-        const link = node("a", "Open Transport");
-        link.href = "./transport.html";
-        root.append(link, node("p", "Vehicles, reservations and transport requests."));
-      } else root.append(node("p", "No modules assigned. Contact an administrator to request access."));
+      renderPortal(root, permissions, context);
     } else if (page === "users") await directory(client, context, current, message);
     else if (page === "transport") {
       if (!permissions.view) { message.textContent = "You do not have transport access."; return; }

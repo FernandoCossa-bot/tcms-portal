@@ -12,6 +12,8 @@
   media.addEventListener("change", apply);
   document.addEventListener("DOMContentLoaded", () => {
     const header = document.querySelector("header");
+    const account = document.querySelector("#account-summary");
+    if (account) header.append(account);
     const label = document.createElement("label");
     label.className = "theme-control";
     label.textContent = "Appearance";
