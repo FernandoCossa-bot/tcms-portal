@@ -10,7 +10,7 @@ const refresh = document.querySelector("#check-access");
 const logout = document.querySelector("#sign-out");
 const registerLink = document.querySelector("#register-link");
 const manageUsersLink = document.querySelector("#manage-users-link");
-const protectedPage = ["home", "users", "transport", "password", "hr"].includes(page);
+const protectedPage = ["home", "users", "transport", "password", "hr", "ims"].includes(page);
 let modules;
 let userManagement;
 let homeTools;

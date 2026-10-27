@@ -26,3 +26,9 @@ body[data-page="password"] main { max-width: 680px; margin-inline: auto; }
 #hr-content form { display:grid; gap:12px; }
 #hr-create { max-width:760px; }
 #hr-content article { padding:24px; margin-block:20px; border:1px solid var(--border); border-radius:20px; background:var(--surface); }
+
+/* Owner-only preparation workspace; no connection or access grant controls. */
+.integration-preparation { grid-column: 1 / -1; padding: 1.5rem; border: 1px solid var(--border, #cbd5e1); border-radius: 16px; margin-bottom: 1.5rem; }
+.integration-preparation li { margin-block: .65rem; }
+.integration-preparation label { display: block; margin-top: 1.2rem; }
+.integration-preparation input { max-width: 100%; }

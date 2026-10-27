@@ -43,19 +43,20 @@ export function field(form, name, labelText, options = {}) {
 }
 let epoch = 0;
 let root;
-export function renderPortal(target, permissions, context, catalog = []) {
+export function renderPortal(target, permissions, context, catalog = [], imsAccess = false) {
   for (const item of catalog) {
-    const available = item.code === 'logistics' && item.integration_status === 'transport_available' && permissions.view === true;
+    const isIMS = item.code === 'foundation';
+    const available = isIMS ? imsAccess === true : item.code === 'logistics' && item.integration_status === 'transport_available' && permissions.view === true;
     const card = node(available ? 'a' : 'article');
     card.className = 'module-card ' + (available ? 'transport' : 'module-unavailable');
-    if (available) card.href = './transport.html';
+    if (available) card.href = isIMS ? './ims.html' : './transport.html';
     else card.setAttribute('aria-disabled', 'true');
     const top = node('div'); top.className = 'module-card-top';
     const icon = node('span', {foundation:'◈',education:'▤',farm:'❧',logistics:'↗'}[item.code]);
     icon.className = 'module-icon'; icon.setAttribute('aria-hidden', 'true');
-    top.append(icon, node('span', available ? 'Open transportation ↗' : 'Unavailable'));
+    top.append(icon, node('span', available ? (isIMS ? 'Open IMS ↗' : 'Open transportation ↗') : 'Unavailable'));
     const footer = node('div'); footer.className = 'module-card-footer';
-    footer.append(node('span', available ? 'Transportation available' : item.integration_status === 'transport_available' ? 'Access not assigned' : 'Integration pending'));
+    footer.append(node('span', available ? (isIMS ? 'IMS available' : 'Transportation available') : item.integration_status === 'transport_available' ? 'Access not assigned' : 'Integration pending'));
     card.append(top, node('h3',item.name), node('p',item.description),footer); target.append(card);
   }
   if (context.has_hr_access === true) {
@@ -89,8 +90,19 @@ export async function showModules(client, context, page) {
       const {data: catalog, error} = await client.rpc('core_get_module_catalog');
       if (current !== epoch) return;
       if (error || !Array.isArray(catalog) || catalog.length !== 4) throw new Error('Catalog unavailable');
-      renderPortal(root, permissions, context, catalog);
+            let imsAccess = false;
+      try {
+        const ims = await import('./ims.js');
+        imsAccess = (await ims.imsRequest(client, 'access'))?.allowed === true;
+      } catch { /* Fail closed: other modules remain usable. */ }
+      if (current !== epoch) return;
+      renderPortal(root, permissions, context, catalog, imsAccess);
     } else if (page === "users") await directory(client, context, current, message);
+    else if (page === "ims") {
+      const ims = await import('./ims.js');
+      if (current !== epoch) return;
+      await ims.showIMS(client, root, () => current === epoch);
+    }
     else if (page === "transport") {
       if (!permissions.view) { message.textContent = "You do not have transport access."; return; }
       const transport = await import("./transport.js");
@@ -101,6 +113,11 @@ export async function showModules(client, context, page) {
   }
 }
 async function directory(client, context, current, message) {
+  if (context.platform_role === 'system_owner' && context.can_enter === true) {
+    const integration = await import('./integration-preparation.js');
+    if (current !== epoch) return;
+    integration.renderIntegrationPreparation(root, context);
+  }
   let offset = 0;
   let saving = false;
   const records = node("div");

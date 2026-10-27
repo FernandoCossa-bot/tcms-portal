@@ -13,3 +13,7 @@ for(const role of ['system_owner','restricted_admin','member']) for(const view o
  assert.equal(urls.some(u=>/^https:/.test(u)),false);
 }
 console.log('PASS: four modules for every account, owner-only administration, transport permission retained, pending integrations not linked.');
+ctx.target=new Element('div');
+vm.runInContext('renderPortal(target,{view:false},{platform_role:"member"},catalog,true)',ctx);
+assert.equal(ctx.target.children.filter(e=>e.tag==='a').some(e=>e.href==='./ims.html'),true);
+console.log('PASS: gateway-approved IMS access links to the integrated page.');

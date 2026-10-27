@@ -1,0 +1,38 @@
+IMS integration preparation — 27 October 2026
+
+Implemented locally:
+- Owner-only module integration section within System Administration.
+- Downloadable JSON template; local file review with strict allowed fields and size limit.
+- No upload, persistence, remote request, secret storage, access grant or activation.
+- Source IMS reference dstzkaygqvxhzmefirdr retained; a different test project required.
+- Public HTTPS application/callback on the same origin and GitHub repository required.
+- Stable module code foundation; display name Information Management System.
+- Existing module cards and transport permission logic unchanged.
+
+Expected integration boundary (NOT implemented by the preparation panel):
+Portal: authenticated canonical identity, active status, completed password onboarding,
+current central module assignment, global lock and owner exception.
+IMS: explicit local identity mapping, local approval, business role, department scope,
+operation/row validation, protected Owner mapping and audit.
+An ordinary user's access requires both central authorization and IMS approval.
+Module administrator delegation remains limited to the module and centrally allowed scope.
+Email alone must not bind identities. Source and test project identities remain distinct.
+
+Proposed access result, to be implemented server-side after identity pilot:
+contractVersion 1.0; moduleCode foundation; allowed boolean;
+reason one of allowed/not_assigned/not_approved/suspended/password_required/locked/unavailable;
+permissions array of agreed operation codes; checkedAt timestamp; requestId trace ID.
+Malformed, stale, unavailable or unverified responses must never enable launch.
+A configuration file is metadata, not authorization evidence.
+
+Pending before activation:
+1. Colleague provides repository/application addresses and separate test project invitation.
+2. Repeat SQL tests plus real Auth and Storage against colleague-owned test project.
+3. Register client and exact callback, validate issuer/signature/audience/expiry and flow.
+4. Implement server authorization checks and audited Owner-only configuration persistence.
+5. Test revoked permissions, disabled accounts, global lock, old sessions and outages.
+6. Enable launch only after all server-side tests pass.
+
+This change is local, not published. Tests: integration-preparation, portal, navigation,
+users, home-tools, HR and publish-check passed. Public bundle contains 19 allowed files;
+secret and SQL scan passed. Uploaded handover files are not added to publication.
