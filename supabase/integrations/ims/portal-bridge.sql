@@ -28,7 +28,7 @@ as $$ declare actor uuid; result jsonb; begin
   raise exception 'IMS access not approved' using errcode='42501';
  end if;
  case p_action
- when 'access' then return jsonb_build_object('allowed',true,'role',(select role from public.staff_profiles where id=actor),'is_admin',public.is_admin());
+ when 'access' then return jsonb_build_object('allowed',true,'role',(select role from public.staff_profiles where id=actor),'is_admin',public.is_admin(),'local_id',actor);
  when 'list' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_training_sessions() t;
  when 'create' then select to_jsonb(public.add_training_session(
    p_payload->>'name',(p_payload->>'date')::date,p_payload->>'location')) into result;
@@ -39,6 +39,46 @@ as $$ declare actor uuid; result jsonb; begin
     s.project_id,s.location_id,s.planned_participants,s.objectives,s.results)) into result
    from public.training_sessions s where s.id=(p_payload->>'id')::bigint;
    if result is null then raise exception 'Activity not found'; end if;
+ when 'attendance' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_session_attendance(nullif(p_payload->>'id','')::bigint) t;
+ when 'attendance_create' then select to_jsonb(public.add_attendance_record(nullif(p_payload->>'session_id','')::bigint,p_payload->>'name',p_payload->>'status')) into result;
+ when 'attendance_edit' then select to_jsonb(public.update_attendance_record(nullif(p_payload->>'id','')::bigint,p_payload->>'name',p_payload->>'status')) into result;
+ when 'files' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_session_files(nullif(p_payload->>'id','')::bigint) t;
+ when 'departments' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_departments() t;
+ when 'locations' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_locations() t;
+ when 'projects' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_projects() t;
+ when 'staff_names' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_staff_names() t;
+ when 'staff' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_staff_admin() t;
+ when 'audit' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_audit_log() t;
+ when 'dashboard' then select to_jsonb(public.get_dashboard(nullif(p_payload->>'from','')::date,nullif(p_payload->>'to','')::date,nullif(p_payload->>'department_id','')::bigint)) into result;
+ when 'submit' then select to_jsonb(public.submit_activity(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'verify' then select to_jsonb(public.verify_activity(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'approve' then select to_jsonb(public.approve_activity(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'return' then select to_jsonb(public.return_activity(nullif(p_payload->>'id','')::bigint,p_payload->>'note')) into result;
+ when 'reopen' then select to_jsonb(public.reopen_activity(nullif(p_payload->>'id','')::bigint,p_payload->>'note')) into result;
+ when 'activity_archive' then select to_jsonb(public.archive_training_session(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'activity_restore' then select to_jsonb(public.restore_training_session(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'attendance_archive' then select to_jsonb(public.archive_attendance_record(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'attendance_restore' then select to_jsonb(public.restore_attendance_record(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'file_archive' then select to_jsonb(public.archive_session_file(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'file_restore' then select to_jsonb(public.restore_session_file(nullif(p_payload->>'id','')::bigint)) into result;
+ when 'archived_activities' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_archived_sessions() t;
+ when 'archived_attendance' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_archived_attendance() t;
+ when 'archived_files' then select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) into result from public.get_archived_files() t;
+ when 'department_save' then select to_jsonb(public.save_department(nullif(p_payload->>'id','')::bigint,p_payload->>'code',p_payload->>'name_pt',p_payload->>'name_en',p_payload->>'name_zh',nullif(p_payload->>'active','')::boolean)) into result;
+ when 'location_save' then select to_jsonb(public.save_location(nullif(p_payload->>'id','')::bigint,p_payload->>'name',p_payload->>'level',nullif(p_payload->>'parent_id','')::bigint,nullif(p_payload->>'active','')::boolean)) into result;
+ when 'project_save' then select to_jsonb(public.save_project(nullif(p_payload->>'id','')::bigint,p_payload->>'code',p_payload->>'name',nullif(p_payload->>'department_id','')::bigint,nullif(p_payload->>'location_id','')::bigint,nullif(p_payload->>'start_date','')::date,nullif(p_payload->>'end_date','')::date,nullif(p_payload->>'budget','')::numeric,p_payload->>'status',nullif(p_payload->>'responsible_id','')::uuid,p_payload->>'description')) into result;
+ when 'staff_save' then select to_jsonb(public.save_staff_profile(nullif(p_payload->>'id','')::uuid,nullif(p_payload->>'approved','')::boolean,p_payload->>'role',nullif(p_payload->>'department_id','')::bigint,nullif(p_payload->>'is_admin','')::boolean)) into result;
+ when 'activity_create' then select to_jsonb(public.add_training_session(p_payload->>'name',nullif(p_payload->>'date','')::date,p_payload->>'location',p_payload->>'activity_type',nullif(p_payload->>'department_id','')::bigint,nullif(p_payload->>'project_id','')::bigint,nullif(p_payload->>'location_id','')::bigint,nullif(p_payload->>'planned_participants','')::integer,p_payload->>'objectives',p_payload->>'results')) into result;
+ when 'activity_edit' then select to_jsonb(public.update_training_session(nullif(p_payload->>'id','')::bigint,p_payload->>'name',nullif(p_payload->>'date','')::date,p_payload->>'location',p_payload->>'activity_type',nullif(p_payload->>'department_id','')::bigint,nullif(p_payload->>'project_id','')::bigint,nullif(p_payload->>'location_id','')::bigint,nullif(p_payload->>'planned_participants','')::integer,p_payload->>'objectives',p_payload->>'results')) into result;
+ when 'file_upload_check' then
+ if not exists(select 1 from public.training_sessions where id=(p_payload->>'id')::bigint and archived_at is null) then raise exception 'Activity unavailable'; end if;
+ return jsonb_build_object('allowed',true);
+ when 'file_register' then
+ if p_payload->>'path' not like 'session-' || (p_payload->>'id') || '/portal-' || actor::text || '/%' then raise exception 'Invalid upload owner' using errcode='42501'; end if;
+ select to_jsonb(public.add_session_file((p_payload->>'id')::bigint,p_payload->>'path',p_payload->>'name',p_payload->>'mime',(p_payload->>'size')::bigint,p_payload->>'caption')) into result;
+ when 'file_download_check' then
+ select jsonb_build_object('path',f.storage_path,'name',f.file_name) into result from public.session_files f join public.training_sessions s on s.id=f.training_session_id where f.id=(p_payload->>'id')::bigint and f.archived_at is null and s.archived_at is null;
+ if result is null then raise exception 'File unavailable'; end if;
  else raise exception 'Unsupported operation' using errcode='22023';
  end case;
  return result;

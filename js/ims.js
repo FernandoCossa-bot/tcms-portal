@@ -1,47 +1,74 @@
 import {node,field} from './modules.js';
 const endpoint='https://dstzkaygqvxhzmefirdr.supabase.co/functions/v1/portal-bridge';
 export async function imsRequest(client,action,payload={}){
- const {data:{session}}=await client.auth.getSession();
- if(!session)throw Error('Sign in required.');
+ const {data:{session}}=await client.auth.getSession();if(!session)throw Error('Sign in required.');
  const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({action,payload}),cache:'no-store'});
- const body=await response.json();
- if(!response.ok)throw Error(response.status===403?'IMS access is not assigned or is no longer available.':body.error||'IMS is unavailable.');
- return body.data;
+ const body=await response.json();if(!response.ok)throw Error(response.status===403?'IMS access is not assigned or this operation is not permitted.':body.error||'IMS is unavailable.');return body.data;
 }
 export async function showIMS(client,root,active){
  const message=node('p','Checking IMS access…');message.setAttribute('role','status');root.append(message);
- try{
-  const access=await imsRequest(client,'access');if(!active())return;
-  if(access?.allowed!==true){message.textContent='IMS access has not been assigned.';return;}
-  const form=node('form');form.id='ims-activity';
-  const heading=node('h2','Create an activity');
-  const name=field(form,'name','Activity name',{required:true,maxLength:200});
-  const date=field(form,'date','Date',{type:'date',required:true});
-  const location=field(form,'location','Location',{required:true,maxLength:200});
-  const save=node('button','Save activity');save.type='submit';
-  const cancel=node('button','Cancel edit');cancel.type='button';cancel.hidden=true;form.append(save,cancel);
-  const refresh=node('button','Refresh activities');refresh.type='button';const list=node('div');
-  root.append(heading,form,refresh,list);let editing=null,busy=false;
-  const reset=()=>{editing=null;form.reset();heading.textContent='Create an activity';cancel.hidden=true;};
-  const load=async()=>{
-   list.replaceChildren();const rows=await imsRequest(client,'list');if(!active())return;
-   for(const row of rows){
-    const card=node('article');card.className='integration-preparation';
-    card.append(node('h3',row.session_name),node('p',`${row.session_date} · ${row.location||''} · ${row.workflow_status}`));
-    if(access.is_admin||row.workflow_status==='planned'){
-     const edit=node('button','Edit activity');edit.type='button';edit.addEventListener('click',()=>{
-      if(busy)return;editing=row.id;name.value=row.session_name;date.value=row.session_date;location.value=row.location||'';heading.textContent='Edit activity';cancel.hidden=false;name.focus();
-     });card.append(edit);
-    }list.append(card);
-   }message.textContent=rows.length?`${rows.length} activities loaded from IMS.`:'No activities found.';
-  };
-  cancel.addEventListener('click',()=>{if(!busy)reset();});
-  refresh.addEventListener('click',async()=>{if(busy)return;try{await load();}catch(e){list.replaceChildren();message.textContent=e.message;}});
-  form.addEventListener('submit',async event=>{
-   event.preventDefault();if(busy||!active())return;busy=true;save.disabled=true;
-   try{const id=await imsRequest(client,editing?'edit':'create',{id:editing,name:name.value.trim(),date:date.value,location:location.value.trim()});if(!active())return;reset();await load();message.textContent=`Activity ${id} saved in IMS.`;}
-   catch(e){if(active())message.textContent=e.message;}
-   finally{busy=false;save.disabled=false;}
-  });await load();
- }catch(e){if(active()){root.replaceChildren(message);message.textContent=e.message;}}
+ const request=(action,payload={})=>imsRequest(client,action,payload);
+ let access,viewEpoch=0,busy=false,refs={};
+ const nav=node('nav'),view=node('section');nav.className='ims-tabs';nav.setAttribute('aria-label','IMS sections');view.className='ims-view';
+ const run=async job=>{if(busy||!active())return;busy=true;root.setAttribute('aria-busy','true');try{await job();}catch(e){if(active())message.textContent=e.message+' Refresh before retrying an uncertain save.';}finally{busy=false;root.setAttribute('aria-busy','false');}};
+ const button=(parent,text,job)=>{const b=node('button',text);b.type='button';b.addEventListener('click',()=>run(job));parent.append(b);return b;};
+ const section=title=>{viewEpoch++;message.textContent='';view.replaceChildren(node('h2',title));return viewEpoch;};
+ const current=e=>active()&&e===viewEpoch;
+ const manager=()=>access.is_admin||access.role==='im_team';
+ const leadership=()=>manager()||access.role==='leadership';
+ const projectsManager=()=>leadership()||access.role==='department_head';
+ const choices=(rows,label)=>[['','None'],...rows.map(r=>[String(r.id),r[label]||r.name||r.name_pt||r.id])];
+ const select=(key,label,options,required=false)=>({key,label,choices:options,required});
+ const text=(key,label,required=false)=>({key,label,required,maxLength:200});
+ const num=(key,label)=>({key,label,type:'number',min:0,nullable:true});
+ const date=(key,label,required=false)=>({key,label,type:'date',required});
+ const bool=(key,label)=>select(key,label,[['true','Yes'],['false','No']]);
+ const typed=(value,s)=>s.type==='number'?(value===''?null:Number(value)):s.key.endsWith('_id')?(value===''?null:(s.key==='responsible_id'?value:Number(value))):s.choices?.[0]?.[0]==='true'?value==='true':value||null;
+ const form=(parent,title,specs,values,submit,saveLabel='Save')=>{
+  const wrap=node('section');wrap.className='integration-preparation';wrap.append(node('h3',title));const f=node('form');f.id='ims-form-'+Math.random().toString(36).slice(2);f.className='ims-form';const inputs={};
+  for(const spec of specs){inputs[spec.key]=field(f,spec.key,spec.label,{...spec,value:values[spec.key]??''});}
+  const save=node('button',saveLabel);save.type='submit';f.append(save);f.addEventListener('submit',e=>{e.preventDefault();run(async()=>{save.disabled=true;try{await submit(Object.fromEntries(specs.map(s=>[s.key,typed(inputs[s.key].value,s)])));}finally{save.disabled=false;}});});wrap.append(f);parent.append(wrap);return wrap;
+ };
+ const card=(parent,title,lines=[])=>{const c=node('article');c.className='integration-preparation';c.append(node('h3',title));for(const line of lines)if(line)c.append(node('p',String(line)));parent.append(c);return c;};
+ const loadRefs=async()=>{const [departments,locations,projects,staff]=await Promise.all(['departments','locations','projects','staff_names'].map(a=>request(a)));refs={departments,locations,projects,staff};};
+ const exportCSV=(rows,filename)=>{const cols=Object.keys(rows[0]||{});const safe=x=>{let s=String(x??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};const data=[cols,...rows.map(r=>cols.map(c=>typeof r[c]==='object'?JSON.stringify(r[c]):r[c]))].map(r=>r.map(safe).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff'+data],{type:'text/csv;charset=utf-8'}));const a=node('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+ async function activities(){const e=section('Activities');const rows=await request('list');if(!current(e))return;message.textContent=`${rows.length} activities loaded from IMS.`;
+  button(view,'Create activity',()=>activityForm());button(view,'Refresh activities',activities);button(view,'Export activities',()=>exportCSV(rows,'ims-activities.csv'));
+  const search=field(view,'search','Search activities',{maxLength:200});const list=node('div');view.append(list);
+  const draw=()=>{list.replaceChildren();for(const r of rows.filter(r=>(r.session_name+' '+(r.location||'')).toLowerCase().includes(search.value.toLowerCase()))){const c=card(list,r.session_name,[`${r.session_date} · ${r.location||r.location_path||''} · ${r.workflow_status}`,`${r.present_count} present · ${r.absent_count} absent · ${r.file_count} files`]);button(c,'Open activity',()=>detail(r.id));}};search.addEventListener('input',draw);draw();
+ }
+ async function activityForm(row={}){section(row.id?'Edit activity':'Create activity');await loadRefs();if(!active())return;
+  const specs=[text('name','Activity name',true),date('date','Date',true),text('location','Place'),select('activity_type','Activity type',['training','distribution','health','education','relief','environment','volunteer','meeting','other'].map(x=>[x,x])),select('department_id','Department',choices(refs.departments,'name_pt')),select('project_id','Project',choices(refs.projects,'name')),select('location_id','Location',choices(refs.locations,'path')),num('planned_participants','Planned participants'),text('objectives','Objectives'),text('results','Results')];
+  form(view,row.id?'Edit activity':'New activity',specs,{...row,name:row.session_name,date:row.session_date,activity_type:row.activity_type||'training'},async p=>{if(!p.location&&!p.location_id)throw Error('Provide a place or location.');const id=await request(row.id?'activity_edit':'activity_create',{...p,id:row.id});await detail(id);message.textContent=`Activity ${id} saved in IMS.`;},'Save activity');button(view,'Cancel',activities);
+ }
+ async function detail(id){const e=section('Activity details');const [rows,attendance,files]=await Promise.all([request('list'),request('attendance',{id}),request('files',{id})]);if(!current(e))return;const r=rows.find(x=>x.id===id);if(!r)throw Error('Activity unavailable.');
+  const c=card(view,r.session_name,[`${r.session_date} · ${r.location||r.location_path||''}`,`Status: ${r.workflow_status}`,r.objectives&&'Objectives: '+r.objectives,r.results&&'Results: '+r.results,r.return_note&&'Review note: '+r.return_note]);button(c,'Back to activities',activities);
+  if(access.is_admin||r.workflow_status==='planned')button(c,'Edit activity',()=>activityForm(r));
+  for(const [status,action,label,allowed] of [['planned','submit','Submit for review',true],['submitted','verify','Verify activity',manager()||access.role==='department_head'],['verified','approve','Approve activity',leadership()]])if(r.workflow_status===status&&allowed)button(c,label,async()=>{await request(action,{id});await detail(id);message.textContent='Activity updated.';});
+  if(['submitted','verified'].includes(r.workflow_status)&&projectsManager())button(c,'Return for correction',()=>noteForm('return',id));
+  if(r.workflow_status==='approved'&&access.is_admin)button(c,'Reopen activity',()=>noteForm('reopen',id));
+  if(access.is_admin)button(c,'Archive activity',async()=>{if(!confirm('Archive this activity? It can be restored from Archive.'))return;await request('activity_archive',{id});await activities();});
+  view.append(node('h3','Attendance'));button(view,'Export attendance',()=>exportCSV(attendance,'ims-attendance-'+id+'.csv'));
+  const attendanceForm=(row={})=>{const w=form(view,row.id?'Edit attendance':'Add attendance',[text('name','Participant name',true),select('status','Attendance status',[['Present','Present'],['Absent','Absent']],true)],{name:row.participant_name,status:row.attendance_status||'Present'},async p=>{await request(row.id?'attendance_edit':'attendance_create',{...p,id:row.id,session_id:id});await detail(id);message.textContent='Attendance saved.';},'Save attendance');w.scrollIntoView({block:'center',behavior:'smooth'});};
+  const open=access.is_admin||r.workflow_status!=='approved';if(open)button(view,'Add attendance',()=>attendanceForm());
+  for(const a of attendance){const ac=card(view,a.participant_name,[a.attendance_status]);if(open)button(ac,'Edit attendance',()=>attendanceForm(a));if(access.is_admin)button(ac,'Archive attendance',async()=>{await request('attendance_archive',{id:a.id});await detail(id);});}
+  if(!attendance.length)view.append(node('p','No attendance records yet.'));
+  view.append(node('h3','Files'));const upload=node('form');upload.id='ims-upload';upload.className='ims-form';const input=field(upload,'file','Choose file',{type:'file',required:true});input.accept='.pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv';const caption=field(upload,'caption','Caption',{maxLength:2000});const save=node('button','Upload file');save.type='submit';upload.append(node('p','Maximum 10 MB. Files remain private.'),save);view.append(upload);
+  upload.addEventListener('submit',ev=>{ev.preventDefault();run(async()=>{const file=input.files[0];if(!file||!file.size||file.size>10485760)throw Error('Choose a file between 1 byte and 10 MB.');save.disabled=true;try{const data=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(String(fr.result).split(',')[1]);fr.onerror=reject;fr.readAsDataURL(file);});await request('file_upload',{id,name:file.name,mime:file.type||(/\.csv$/i.test(file.name)?'text/csv':/\.txt$/i.test(file.name)?'text/plain':''),caption:caption.value,base64:data});await detail(id);message.textContent='File uploaded and registered in IMS.';}finally{save.disabled=false;}});});
+  for(const f of files){const fc=card(view,f.file_name,[f.caption,`${Math.ceil(f.size_bytes/1024)} KB · ${f.uploaded_by||''}`]);button(fc,'Download file',async()=>{const data=await request('file_download',{id:f.id});const url=new URL(data.url);if(url.origin!=='https://dstzkaygqvxhzmefirdr.supabase.co')throw Error('Invalid download address');const response=await fetch(url.href,{cache:'no-store'});if(!response.ok)throw Error('File download failed');const blob=await response.blob();if(blob.size!==Number(f.size_bytes))throw Error('Downloaded size does not match the file record');const objectUrl=URL.createObjectURL(blob);const a=node('a','Save '+f.file_name);a.href=objectUrl;a.download=f.file_name;fc.append(a);a.click();message.textContent='File received: '+f.file_name+' ('+blob.size+' bytes). Use Save if your browser did not start the download.';setTimeout(()=>{URL.revokeObjectURL(objectUrl);a.remove();},60000);});if(access.is_admin)button(fc,'Archive file',async()=>{await request('file_archive',{id:f.id});await detail(id);});}
+  if(!files.length)view.append(node('p','No files attached.'));
+ }
+ function noteForm(action,id){section(action==='return'?'Return for correction':'Reopen activity');form(view,'Reason',[text('note','Reason',true)],{},async p=>{await request(action,{id,...p});await detail(id);},'Confirm');button(view,'Cancel',()=>detail(id));}
+ async function dashboard(filters={}){const e=section('Overview');const d=await request('dashboard',filters);if(!current(e))return;form(view,'Filter overview',[date('from','From'),date('to','To')],filters,dashboard,'Apply filters');const grid=node('div');grid.className='ims-stats';view.append(grid);for(const [k,label]of [['activities','Activities'],['present','Present'],['absent','Absent'],['participants','Participants'],['files','Files']])card(grid,String(d[k]??0),[label]);for(const [k,v]of Object.entries(d.by_status||{}))card(view,k,[`${v} activities`]);for(const r of d.pending||[]){const c=card(view,r.name,[`${r.date} · ${r.status}`]);button(c,'Open activity',()=>detail(r.id));}}
+ async function management(type){const e=section({departments:'Departments',locations:'Locations',projects:'Projects',staff:'IMS staff'}[type]);await loadRefs();const rows=type==='staff'?await request('staff'):refs[type];if(!current(e))return;
+  const defs={departments:[text('code','Code'),text('name_pt','Portuguese name',true),text('name_en','English name'),text('name_zh','Chinese name'),bool('active','Active')],locations:[text('name','Name',true),select('level','Level',['province','district','community'].map(x=>[x,x])),select('parent_id','Parent location',choices(refs.locations,'path')),bool('active','Active')],projects:[text('code','Code'),text('name','Project name',true),select('department_id','Department',choices(refs.departments,'name_pt')),select('location_id','Location',choices(refs.locations,'path')),date('start_date','Start date'),date('end_date','End date'),num('budget','Budget'),select('status','Status',['planned','active','completed','cancelled'].map(x=>[x,x])),select('responsible_id','Responsible person',choices(refs.staff,'display_name')),text('description','Description')],staff:[bool('approved','Approved'),select('role','Role',['field_officer','department_head','finance','leadership','im_team'].map(x=>[x,x])),select('department_id','Department',choices(refs.departments,'name_pt')),bool('is_admin','IMS administrator')]};
+  const can=type==='staff'?access.is_admin:type==='projects'?projectsManager():manager();
+  const edit=(row={})=>{section('Manage '+type);form(view,row.id?'Edit record':'New record',defs[type],{active:true,status:'planned',level:'province',...row},async p=>{await request(({departments:'department',locations:'location',projects:'project',staff:'staff'}[type])+'_save',{...p,id:row.id||null});await management(type);message.textContent='Record saved.';});button(view,'Cancel',()=>management(type));};
+  if(can&&type!=='staff')button(view,'Add '+({departments:'department',locations:'location',projects:'project'}[type]),()=>edit());
+  for(const r of rows){const c=card(view,r.name||r.name_pt||r.display_name||r.email,[r.code,r.path,r.status,r.role,r.approved!==undefined?'Approved: '+(r.approved?'Yes':'No'):null]);if(can)button(c,'Edit record',()=>edit(r));}if(!rows.length)view.append(node('p','No records found.'));
+ }
+ async function archive(){const e=section('Archive');for(const [type,action,title]of [['activity','archived_activities','Activities'],['attendance','archived_attendance','Attendance'],['file','archived_files','Files']]){const rows=await request(action);if(!current(e))return;view.append(node('h3',title));for(const r of rows){const c=card(view,r.session_name||r.participant_name||r.file_name,[r.participant_name,r.file_name,r.archived_at]);button(c,'Restore '+type,async()=>{await request(type+'_restore',{id:r.id});await archive();});}if(!rows.length)view.append(node('p','No archived '+title.toLowerCase()+'.'));}}
+ async function audit(){const e=section('Audit history');const rows=await request('audit');if(!current(e))return;button(view,'Export audit history',()=>exportCSV(rows,'ims-audit.csv'));for(const r of rows)card(view,r.label||r.table_name,[`${r.at} · ${r.user_name}`,`${r.action} · ${r.table_name} #${r.record_id}`]);}
+ try{access=await request('access');if(!active())return;if(!access?.allowed){message.textContent='IMS access has not been assigned.';return;}root.append(nav,view);button(nav,'Overview',()=>dashboard());button(nav,'Activities',activities);button(nav,'Projects',()=>management('projects'));if(manager()){button(nav,'Departments',()=>management('departments'));button(nav,'Locations',()=>management('locations'));}if(leadership())button(nav,'Audit history',audit);if(access.is_admin){button(nav,'IMS staff',()=>management('staff'));button(nav,'Archive',archive);}await activities();}
+ catch(e){if(active()){root.replaceChildren(message);message.textContent=e.message;}}
 }

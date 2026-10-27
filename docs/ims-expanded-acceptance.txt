@@ -1,0 +1,14 @@
+IMS expanded integration acceptance — 2026-10-28 (Asia/Taipei)
+Owner signed in on GitHub Pages and opened IMS without a second login: PASS.
+Live IMS existing data loaded: PASS.
+Attendance added to fictional activity 12; Present changed to Absent: PASS.
+File ims-acceptance.txt uploaded, registered and downloaded (108 bytes): PASS.
+Activity 12 submitted, verified and approved: PASS; persisted after reload.
+Test file archived and restored: PASS.
+Dashboard, existing projects, departments, locations, staff management and audit screens loaded: PASS.
+Other staff accounts and existing business records were not edited during acceptance.
+New test data: one attendance record and one file linked to the previously created fictional activity 12.
+Local database tests cover denied admin operations for field officer, unmapped account denial, workflow, reference-data writes and Owner protection.
+Endpoint tests cover invalid sessions, Portal denial, IMS denial, forged file registration and file type validation.
+Permanent deletion is not exposed; archive and restore are supported.
+Separate legacy IMS login and additional Portal identity provisioning remain separate integration tasks.

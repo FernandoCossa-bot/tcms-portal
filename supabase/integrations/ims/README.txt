@@ -1,12 +1,22 @@
-IMS integration deployed on module-owned project dstzkaygqvxhzmefirdr.
-Remote function name: portal-bridge; verify_jwt=false because handler validates Portal Auth.
-SQL file applies ONLY to IMS, not Portal. Existing business tables are preserved.
-Uses immutable Portal user ID -> separate local IMS profile, never email auto-linking.
-System Owner mapping is explicitly authorized; ordinary users without mappings are denied.
-Every request validates Portal user and core_get_my_context.can_enter, then IMS local approval.
-Supported operations: access, activity list, create and edit. Other IMS features are not exposed
-through this bridge yet. Original IMS application remains available separately.
-No OIDC session federation is claimed: this is an authenticated server gateway integration.
-Role assignment UI for cross-project accounts is pending; module mappings are privileged.
-Existing local login routes are not governed by Portal checks yet; only this gateway is.
-Source IMS known security issues require the separately tested hardening patch before full rollout.
+IMS integration — module-owned project dstzkaygqvxhzmefirdr
+Remote function: portal-bridge. Portal session and context are verified on every request.
+Each Portal identity maps to an approved local IMS staff profile. The Owner has the explicitly approved protected administrative mapping.
+
+Connected functions:
+- Activities: list/search, full fields, add/edit, CSV export.
+- Attendance: list/add/edit, CSV export, archive/restore (administrator).
+- Files: private upload up to 10 MB, validated download, archive/restore.
+- Workflow: submit, verify, approve, return with reason, reopen (administrator).
+- Dashboard, projects, departments, locations, IMS staff administration, audit history.
+- Reversible archive and restore. Permanent deletion is not exposed through the Portal.
+
+Browser contains no SQL or privileged keys. Server uses an explicit operation allowlist.
+File upload checks module access first; storage paths are generated on the server.
+File download checks active metadata and activity, then signs access for 60 seconds.
+Original accounts and business records remain in IMS. No data migration into Portal.
+
+Integration boundary:
+Original IMS login remains independent; this gateway applies central access checks.
+Original module security hardening is separate and has not been rolled out here.
+Assigning additional Portal-to-IMS identity mappings still requires privileged setup.
+No OIDC session federation is claimed. This is a server-validated Portal integration.

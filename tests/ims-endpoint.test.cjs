@@ -1,0 +1,21 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{stripTypeScriptTypes}=require('node:module');
+let handler,valid=true,portalAllowed=true,moduleAllowed=true,uploadCalls=0,signCalls=0;
+const caller={auth:{getUser:async()=>valid?{data:{user:{id:'member'}}}:{error:{},data:{}}},rpc:async()=>({data:{user_id:'member',can_enter:portalAllowed}})};
+const server={rpc:async(_fn,p)=>moduleAllowed?{data:p.p_action==='access'?{allowed:true,local_id:'local'}:p.p_action==='file_download_check'?{path:'session-12/a',name:'test.txt'}:12}:{error:{code:'42501'}},storage:{from:()=>({upload:async()=>{uploadCalls++;return{};},remove:async()=>({}),createSignedUrl:async()=>{signCalls++;return{data:{signedUrl:'https://example.invalid/file'}};}})}};
+const context=vm.createContext({Request,Response,Set,JSON,Uint8Array,atob,crypto,Deno:{env:{get:k=>k},serve:fn=>handler=fn},createClient:(_url,key)=>key==='SUPABASE_SERVICE_ROLE_KEY'?server:caller});
+vm.runInContext(stripTypeScriptTypes(fs.readFileSync(__dirname+'/../supabase/functions/ims-portal-bridge/index.ts','utf8').replace(/^import.*\n/,'')),context);
+const req=(action,payload={},headers={Authorization:'Bearer token'})=>new Request('https://example.invalid',{method:'POST',headers,body:JSON.stringify({action,payload})});
+(async()=>{
+ assert.equal((await handler(req('list',{},{}))).status,401);
+ valid=false;assert.equal((await handler(req('list'))).status,401);valid=true;
+ portalAllowed=false;assert.equal((await handler(req('file_download',{id:12}))).status,403);portalAllowed=true;
+ moduleAllowed=false;assert.equal((await handler(req('file_download',{id:12}))).status,403);assert.equal(signCalls,0);
+ const file={id:12,name:'test.txt',mime:'text/plain',base64:btoa('fictional data'),caption:''};
+ assert.equal((await handler(req('file_upload',file))).status,403);assert.equal(uploadCalls,0);
+ moduleAllowed=true;assert.equal((await handler(req('file_upload',{...file,mime:'text/html'}))).status,400);
+ assert.equal((await handler(req('file_register',file))).status,400);
+ assert.equal((await handler(req('file_upload',file))).status,200);assert.equal(uploadCalls,1);
+ assert.equal((await handler(req('file_download',{id:12}))).status,200);assert.equal(signCalls,1);
+ assert.equal((await handler(req('list',{}, {Authorization:'Bearer token',Origin:'https://evil.invalid'}))).status,403);
+ console.log('PASS: missing/invalid/blocked sessions, unmapped file access, forged registration, unsupported files and foreign origins denied; authorized upload/download succeeds.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

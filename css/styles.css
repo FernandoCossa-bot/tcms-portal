@@ -32,3 +32,11 @@ body[data-page="password"] main { max-width: 680px; margin-inline: auto; }
 .integration-preparation li { margin-block: .65rem; }
 .integration-preparation label { display: block; margin-top: 1.2rem; }
 .integration-preparation input { max-width: 100%; }
+/* IMS workspace */
+.ims-tabs { display:flex; flex-wrap:wrap; gap:.6rem; margin:1rem 0 1.5rem; }
+.ims-view { min-width:0; }
+.ims-form { display:grid; grid-template-columns:minmax(140px, .4fr) minmax(0,1fr); gap:.8rem 1rem; align-items:center; }
+.ims-form button,.ims-form p { grid-column:1 / -1; }
+.ims-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1rem; }
+.ims-view article button { margin:.3rem .4rem .3rem 0; }
+@media(max-width:600px){.ims-form{grid-template-columns:1fr;}}

@@ -22,6 +22,7 @@ jobs:
           node tests/users.test.cjs ../js/users.js
           node tests/home-tools.test.cjs ../js/home-tools.js
           node tests/integration-preparation.test.cjs
+          node tests/ims-endpoint.test.cjs
           node tests/portal.test.cjs
           node tests/hr.test.cjs
           node tests/hr-endpoint.test.cjs supabase/functions/hr-create-account/index.ts

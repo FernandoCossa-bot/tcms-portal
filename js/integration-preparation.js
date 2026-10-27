@@ -42,13 +42,13 @@ export function renderIntegrationPreparation(root,context){
   panel.setAttribute('aria-labelledby','integration-heading');
   const title=el('h2','Module integrations');title.id='integration-heading';
   panel.append(title,el('h3',imsTemplate.displayName),
-    el('p','Activity access is connected through the IMS gateway. The configuration form below is for a future full-module authentication pilot.'));
+    el('p','IMS operations are connected through the authenticated gateway. The configuration form below is for a future full-module authentication pilot.'));
   const list=el('ul');
   for(const text of [
     'Module identity and source Supabase project identified.',
     'Local database checks: 104 passed. Real Supabase login and file operations still need testing.',
     'Module-owned IMS database connected; existing data remains in IMS.',
-    'Activity list, creation and editing verified with the System Owner account.',
+    'Activities, attendance, files, workflows and module management are connected.',
     'Gateway checks Portal access and IMS approval on every request. Original IMS login remains separate.'
   ])list.append(el('li',text));
   panel.append(list);
