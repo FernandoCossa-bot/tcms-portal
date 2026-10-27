@@ -1,0 +1,16 @@
+Portal catalog and first-access update — 2026-10-27
+
+Applied to Supabase: portal_catalog_password_onboarding.
+- Four module records; no direct table access; authenticated catalog RPC checks current account access.
+- New profiles default to must_change_password=true; existing profiles remain false to preserve access.
+- Auth password-change trigger clears the flag only when the stored password actually changes.
+- Context can_enter=false while password change is required; existing transport RPCs inherit this check.
+- Frontend routes login -> change-password -> home for required accounts.
+- Four business cards always visible after authentication; logistics retains existing transportation link when permitted.
+- General administration card and page are owner-only in the frontend. Existing delegated backend permissions have not been revoked.
+- External module manager administration is not activated: verified module roles and approved routes are still needed from module owners. No browser-supplied role is trusted.
+- Separate-project SSO is not implemented by this change.
+
+Checks passed: navigation incl. password routing, catalog visibility for all roles, existing users/home tools regression, public-file secret/SQL scan; backend transaction asserted catalog count and blocked catalog/transport while password-required, then rolled back.
+Pending: real new-account password update through Supabase Auth and authenticated browser visual review. Existing passwords were not changed.
+Source changes are local; no GitHub push or Pages deployment performed.

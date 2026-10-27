@@ -14,7 +14,7 @@ async function scenario(page, session, rpc) {
       addEventListener() {}, querySelector() { return this; },
     };
   }
-  if (!["home", "users"].includes(page)) {
+  if (!["home", "users", "hr"].includes(page)) {
     elements["#workspace"] = null;
     elements["#account-summary"] = null;
   }
@@ -31,7 +31,7 @@ async function scenario(page, session, rpc) {
   });
   vm.runInContext(source, context);
   if (process.argv[2]) {
-    vm.runInContext("userManagement = {clearUsers(){}, async showUsers(){}};", context);
+    vm.runInContext("hr = {clearHR(){}, async showHR(){}}; userManagement = {clearUsers(){}, async showUsers(){}};", context);
   }
   await vm.runInContext("client = mockClient; checkAccess();", context);
   return { elements, redirect };
@@ -40,6 +40,12 @@ async function scenario(page, session, rpc) {
 (async () => {
   const session = { user: { id: "owner-id", email: "owner@example.com" } };
   const active = { data: { user_id: "owner-id", can_enter: true, platform_role: "system_owner" } };
+  const onboarding = { data: { ...active.data, can_enter: false, account_can_enter: true, must_change_password: true } };
+  for (const route of ["login", "home", "users", "transport"]) assert.equal((await scenario(route, session, onboarding)).redirect, "./change-password.html");
+  const hrAccount = { data: { ...active.data, platform_role: "member", has_hr_access: true } };
+  assert.equal((await scenario("hr", session, hrAccount)).elements["#workspace"].hidden, false);
+  assert.equal((await scenario("hr", session, {data:{...active.data,platform_role:"member",has_hr_access:false}})).elements["#workspace"].hidden, true);
+  assert.equal((await scenario("users", session, hrAccount)).elements["#workspace"].hidden, true);
   const pending = { data: { user_id: "owner-id", can_enter: false, email_verified: true, account_status: "pending" } };
   assert.equal((await scenario("home", null)).redirect, "./index.html");
   assert.equal((await scenario("login", session, active)).redirect, "./home.html");

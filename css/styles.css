@@ -15,3 +15,14 @@ body[data-page="register"] main{max-width:620px;background:var(--surface);border
 @media(max-width:850px){header{grid-template-columns:1fr auto;padding:18px 22px}header #account-summary{grid-column:1/-1;grid-row:3;border-left:0;padding:10px 0 0;max-width:none}.module-grid{gap:16px}.module-card{padding:24px}.module-card h3{font-size:1.3rem}body[data-page="login"]{grid-template-columns:1fr}.auth-story{min-height:340px;padding:34px}.auth-story h2{font-size:2.5rem;max-width:550px}.orbit-art{display:none}.story-foot{margin-top:20px}body[data-page="login"] main{max-width:600px;padding:40px 28px}main{padding-top:30px}}
 @media(max-width:580px){.module-grid{grid-template-columns:1fr}.module-card{min-height:290px}.section-heading{align-items:flex-start;flex-direction:column;gap:5px;margin-top:28px}main{padding:26px 18px}.admin-section{padding:20px}.section-nav{gap:7px}.section-nav a{font-size:.75rem;padding:8px 11px}article,.tool-card{padding:18px}.empty-modules{padding:26px}body[data-page="register"] main{margin:20px 12px;padding:24px}body[data-page="transport"] #module-content>section,body[data-page="transport"] #module-content>form{padding:20px}.theme-control select{width:92px}h1{font-size:2rem}.page-intro{font-size:.94rem}.module-card-top{margin-bottom:20px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.module-card.module-unavailable { cursor: default; background: var(--surface); opacity: .75; box-shadow: none; }
+.module-card.module-unavailable:hover { transform: none; }
+.module-unavailable .module-icon { filter: grayscale(1); }
+body[data-page="password"] main { max-width: 680px; margin-inline: auto; }
+#password-change-form { display: grid; gap: 16px; }
+.module-card.module-unavailable { filter: grayscale(1); }
+
+#hr-content form { display:grid; gap:12px; }
+#hr-create { max-width:760px; }
+#hr-content article { padding:24px; margin-block:20px; border:1px solid var(--border); border-radius:20px; background:var(--surface); }

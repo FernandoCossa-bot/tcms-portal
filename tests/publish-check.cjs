@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
-const files = ['index.html','register.html','home.html','users.html','transport.html',
+const files = ['hr.html','js/hr.js','change-password.html','js/password-change.js','index.html','register.html','home.html','users.html','transport.html',
   'css/styles.css','js/app.js','js/config.js','js/ui.js','js/registration.js',
   'js/users.js','js/home-tools.js','js/modules.js','js/transport.js'];
 const config = fs.readFileSync(path.join(root,'js/config.js'),'utf8');

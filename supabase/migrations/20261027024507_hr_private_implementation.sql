@@ -1,0 +1,11 @@
+begin;
+alter function public.core_hr_prepare_account(uuid,text,text,text,text) set schema tcms_private;
+alter function public.core_hr_directory(integer) set schema tcms_private;
+alter function public.core_hr_update_employee(uuid,text,text,text,integer) set schema tcms_private;
+grant execute on function tcms_private.core_hr_prepare_account(uuid,text,text,text,text),tcms_private.core_hr_directory(integer),tcms_private.core_hr_update_employee(uuid,text,text,text,integer) to authenticated;
+create function public.core_hr_prepare_account(p_id uuid,p_email text,p_display_name text,p_department text,p_position text) returns jsonb language sql security invoker set search_path='' as $$ select tcms_private.core_hr_prepare_account(p_id,p_email,p_display_name,p_department,p_position); $$;
+create function public.core_hr_directory(p_offset integer default 0) returns jsonb language sql security invoker set search_path='' as $$ select tcms_private.core_hr_directory(p_offset); $$;
+create function public.core_hr_update_employee(p_user_id uuid,p_name text,p_department text,p_position text,p_version integer) returns jsonb language sql security invoker set search_path='' as $$ select tcms_private.core_hr_update_employee(p_user_id,p_name,p_department,p_position,p_version); $$;
+revoke all on function public.core_hr_prepare_account(uuid,text,text,text,text),public.core_hr_directory(integer),public.core_hr_update_employee(uuid,text,text,text,integer) from public,anon,authenticated;
+grant execute on function public.core_hr_prepare_account(uuid,text,text,text,text),public.core_hr_directory(integer),public.core_hr_update_employee(uuid,text,text,text,integer) to authenticated;
+commit;

@@ -10,11 +10,13 @@ const refresh = document.querySelector("#check-access");
 const logout = document.querySelector("#sign-out");
 const registerLink = document.querySelector("#register-link");
 const manageUsersLink = document.querySelector("#manage-users-link");
-const protectedPage = ["home", "users", "transport"].includes(page);
+const protectedPage = ["home", "users", "transport", "password", "hr"].includes(page);
 let modules;
 let userManagement;
 let homeTools;
 let registration;
+let passwordChange;
+let hr;
 let client;
 let generation = 0;
 let signingOut = false;
@@ -28,6 +30,7 @@ function clearProtectedContent() {
   userManagement?.clearUsers();
   homeTools?.clearHomeTools();
   modules?.clearModules();
+  hr?.clearHR();
 }
 
 function denyMessage(context) {
@@ -69,6 +72,14 @@ async function checkAccess() {
     if (error || !context || context.user_id !== session.user.id) {
       throw new Error("Access check failed");
     }
+    if (context.must_change_password === true && context.account_can_enter === true) {
+      if (page !== 'password') { window.location.replace('./change-password.html'); return; }
+      workspace.hidden = false;
+      status.textContent = 'Set your personal password before entering the workspace.';
+      passwordChange?.initializePasswordChange(client);
+      return;
+    }
+    if (page === 'password' && context.can_enter === true) { window.location.replace('./home.html'); return; }
     if (context.can_enter !== true) {
       if (protectedPage) window.location.replace("./index.html");
       else status.textContent = denyMessage(context);
@@ -78,17 +89,19 @@ async function checkAccess() {
       window.location.replace("./home.html");
       return;
     }
+    if (page === 'hr' && context.has_hr_access !== true) { status.textContent = 'Human Resources access is required.'; return; }
     const roles = { system_owner: "System Owner", restricted_admin: "Restricted Administrator" };
-    const administrator = ["system_owner", "restricted_admin"].includes(context.platform_role);
+    const administrator = context.platform_role === "system_owner";
     if (page === "users" && !administrator) {
       status.textContent = "Administrator access is required to manage users.";
       return;
     }
-    summary.textContent = `${context.display_name || session.user.email} · ${roles[context.platform_role] || "Member"}`;
+    summary.textContent = `${context.display_name || session.user.email} · ${roles[context.platform_role] || (context.has_hr_access ? "Human Resources" : "Member")}`;
     workspace.hidden = false;
     status.textContent = "Your account is active.";
     if (manageUsersLink) manageUsersLink.hidden = !administrator;
     if (page === "users") await userManagement.showUsers(client);
+    if (page === "hr") await hr.showHR(client);
     if (["home", "users"].includes(page)) await homeTools?.showHomeTools(client, context, {
       platform: page === "users", compact: page === "home",
     });
@@ -144,6 +157,8 @@ logout.addEventListener("click", async () => {
 
 async function initialize() {
   try {
+    if (page === 'hr') hr = await import('./hr.js');
+    if (page === 'password') passwordChange = await import('./password-change.js');
     // Import registration only where its form exists.
     if (page === "register") registration = await import("./registration.js");
     if (page === "users") userManagement = await import("./users.js");

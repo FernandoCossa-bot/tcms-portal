@@ -1,0 +1,33 @@
+HR and internal account provisioning — 2026-10-27
+
+Live database and Edge Function:
+- HR assignment: fernandocossacsm@gmail.com. No platform role assigned; all transport permissions removed.
+- System Owner retains global settings and administration. General admin RPCs now reject restricted_admin as well as ordinary HR users.
+- Separate HR grant table, employee department/position and provisioning requests; RLS enabled and direct grants denied.
+- hr-create-account verifies Auth identity, checks current HR/Owner privileges through RPC, and invokes Admin Auth on the server. No privileged key is sent to the browser.
+- Server-side account creation consumes a short-lived request, creates an active profile with mandatory password change, stores staff details and audits the action in one database transaction.
+- Public signup is rejected by the Auth insertion trigger, even if an old browser still shows the previous registration form. Supabase signup configuration switch was not changed.
+- Account creation confirms email administratively: HR must verify the employee/email before creation and deliver the initial password directly. No email delivery is configured.
+- No module grants are added to created accounts. Passwords are not stored in application tables, logs or request records.
+- HR can edit ordinary staff name/department/position. Owner, platform administrators, HR accounts and self are protected from HR editing. Account suspension, leave, payroll and recruitment are not implemented in this increment.
+- UI: HR card for authorized HR and Owner; route guarded; owner-only System Administration; internal creation form and paginated staff directory. Public signup link/form removed.
+- Frontend remains local; no commit/push/Pages deployment performed in this increment.
+
+Validation completed:
+- Node navigation, catalog, account review, home controls, HR form and server handler tests.
+- Publication allowlist scan: 18 public files, no embedded secret/token/raw SQL.
+- SQL transaction tests: HR allowed, transport and admin denied, internal test account created with profile/audit/password flag, employee edited, Owner protected, password gate released by simulated hash update, public signup rejected. All fixtures rolled back.
+- Real authenticated DB role successfully reads HR directory.
+- Deployed Edge Function returns HTTP 401 without authentication.
+- Browser: HR account reaches HR directory; direct users.html and transport.html deny access.
+- First real Auth attempt revealed app_metadata is populated after initial insertion. Fixed with a random 256-bit, short-lived, one-use provisioning capability delivered by the server in initial metadata; this is not a role claim. Forgery and replay tests passed. Browser retry pending.
+
+Security review:
+- New privileged HR implementations reside in tcms_private; public wrappers are SECURITY INVOKER and only authenticated callers may execute, with current account/HR checks inside.
+- Existing public SECURITY DEFINER context/admin functions still trigger advisor warnings; permission checks were tested. RLS-no-policy notices are expected with direct access revoked and controlled functions.
+- Existing leaked-password protection setting remains disabled; reference https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+
+
+Browser acceptance completed: HR created tcms.hr.acceptance.20261027@example.invalid through the deployed Edge Function after user entered the temporary password. UI confirmed mandatory password change and no module assignments. HR edited its position to Acceptance test completed. Fictional account retained for first-login/password testing; no real user password changed.
+
+2026-10-27 acceptance: first login redirected to change-password.html; direct home navigation was returned to password page. User changed password in browser; homepage opened as Member with all four business modules unavailable and no HR/System Administration. Publishing this revision after final checks.
