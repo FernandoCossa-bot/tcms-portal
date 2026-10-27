@@ -56,7 +56,7 @@ export function renderPortal(target, permissions, context, catalog = [], imsAcce
     icon.className = 'module-icon'; icon.setAttribute('aria-hidden', 'true');
     top.append(icon, node('span', available ? (isIMS ? 'Open IMS ↗' : 'Open transportation ↗') : 'Unavailable'));
     const footer = node('div'); footer.className = 'module-card-footer';
-    footer.append(node('span', available ? (isIMS ? 'IMS available' : 'Transportation available') : item.integration_status === 'transport_available' ? 'Access not assigned' : 'Integration pending'));
+    footer.append(node('span', available ? (isIMS ? 'IMS available' : 'Transportation available') : isIMS || item.integration_status === 'transport_available' ? 'Access not assigned' : 'Integration pending'));
     card.append(top, node('h3',item.name), node('p',item.description),footer); target.append(card);
   }
   if (context.has_hr_access === true) {
@@ -90,13 +90,15 @@ export async function showModules(client, context, page) {
       const {data: catalog, error} = await client.rpc('core_get_module_catalog');
       if (current !== epoch) return;
       if (error || !Array.isArray(catalog) || catalog.length !== 4) throw new Error('Catalog unavailable');
-            let imsAccess = false;
+            let imsAccess = false, imsState = null;
       try {
         const ims = await import('./ims.js');
-        imsAccess = (await ims.imsRequest(client, 'access'))?.allowed === true;
+        imsState = await ims.imsRequest(client, 'access');
+        imsAccess = imsState?.allowed === true;
       } catch { /* Fail closed: other modules remain usable. */ }
       if (current !== epoch) return;
       renderPortal(root, permissions, context, catalog, imsAccess);
+      if(!imsAccess){const ims=await import('./ims.js');if(current===epoch)ims.renderIMSAccessRequest(root,client,imsState,()=>current===epoch);}
     } else if (page === "users") await directory(client, context, current, message);
     else if (page === "ims") {
       const ims = await import('./ims.js');

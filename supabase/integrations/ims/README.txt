@@ -1,22 +1,26 @@
-IMS integration — module-owned project dstzkaygqvxhzmefirdr
-Remote function: portal-bridge. Portal session and context are verified on every request.
-Each Portal identity maps to an approved local IMS staff profile. The Owner has the explicitly approved protected administrative mapping.
+IMS module authorization — 2026-10-28
+Install order on IMS: portal-bridge.sql (existing gateway), then authorization.sql.
+Deploy the current ims-portal-bridge source as remote portal-bridge.
+Portal Auth is the only login used by the integrated IMS.
+New module authorization rows and business authorship use the exact Portal Auth UUID.
+No secondary Auth account or password is created for approved Portal users.
+Legacy IMS profiles and earlier bridge identities are preserved for existing records; the gateway no longer uses them to authorize Portal requests.
 
-Connected functions:
-- Activities: list/search, full fields, add/edit, CSV export.
-- Attendance: list/add/edit, CSV export, archive/restore (administrator).
-- Files: private upload up to 10 MB, validated download, archive/restore.
-- Workflow: submit, verify, approve, return with reason, reopen (administrator).
-- Dashboard, projects, departments, locations, IMS staff administration, audit history.
-- Reversible archive and restore. Permanent deletion is not exposed through the Portal.
+Tables:
+ims_roles: Viewer, Operator, Manager, Administrator with explicit permitted operations.
+ims_user_roles: Portal UUID, module role, active flag, authorizer and assignment time.
+ims_access_requests: request label snapshot, reason, pending/approved/rejected/revoked state, decision author/time/reason/version.
+ims_access_events: immutable application audit history of requests and authorization changes.
+All four have Row Level Security enabled and no direct anon/authenticated/service_role table privileges. Server-only functions enforce access.
 
-Browser contains no SQL or privileged keys. Server uses an explicit operation allowlist.
-File upload checks module access first; storage paths are generated on the server.
-File download checks active metadata and activity, then signs access for 60 seconds.
-Original accounts and business records remain in IMS. No data migration into Portal.
+Workflow:
+Account signs into Portal, requests IMS access; pending does not create a role mapping.
+IMS administrator reviews pending request, selects role and gives a reason.
+Approval creates the role mapping. Refreshing Portal opens only authorized modules.
+Role changes and revocation are checked on every server operation; stale decisions are rejected.
+Administrators cannot change their own authorization or the protected Owner.
 
-Integration boundary:
-Original IMS login remains independent; this gateway applies central access checks.
-Original module security hardening is separate and has not been rolled out here.
-Assigning additional Portal-to-IMS identity mappings still requires privileged setup.
-No OIDC session federation is claimed. This is a server-validated Portal integration.
+Limits:
+Legacy IMS sign-in remains available separately and keeps its existing behavior.
+Other business modules must implement their own role approval endpoints.
+Permanent deletion remains excluded by the user's decision; archive/restore only.

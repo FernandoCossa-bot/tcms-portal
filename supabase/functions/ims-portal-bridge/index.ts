@@ -22,7 +22,7 @@ Deno.serve(async req=>{
   if(contextError||context?.user_id!==user.id||context?.can_enter!==true)return reply(403,{error:'Portal access denied'});
   const raw=await req.text();if(raw.length>14500000)return reply(413,{error:'Request too large'});
   let body;try{body=JSON.parse(raw);}catch{return reply(400,{error:'Invalid request'});}
-  if(!body||!["access","list","create","edit","attendance","attendance_create","attendance_edit","files","departments","locations","projects","staff_names","staff","audit","dashboard","submit","verify","approve","return","reopen","activity_archive","activity_restore","attendance_archive","attendance_restore","file_archive","file_restore","archived_activities","archived_attendance","archived_files","department_save","location_save","project_save","staff_save","activity_create","activity_edit","file_upload","file_download"].includes(body.action))return reply(400,{error:'Unknown operation'});
+  if(!body||!["access","request_access","access_roles","access_queue","access_history","access_decide","list","create","edit","attendance","attendance_create","attendance_edit","files","departments","locations","projects","staff_names","staff","audit","dashboard","submit","verify","approve","return","reopen","activity_archive","activity_restore","attendance_archive","attendance_restore","file_archive","file_restore","archived_activities","archived_attendance","archived_files","department_save","location_save","project_save","staff_save","activity_create","activity_edit","file_upload","file_download"].includes(body.action))return reply(400,{error:'Unknown operation'});
   const payload=body.payload||{};
   if(['create','edit'].includes(body.action)&&(
     typeof payload.name!=='string'||!payload.name.trim()||payload.name.length>200||
@@ -30,15 +30,11 @@ Deno.serve(async req=>{
     typeof payload.location!=='string'||!payload.location.trim()||payload.location.length>200||
     (body.action==='edit'&&(!Number.isSafeInteger(payload.id)||payload.id<1))))return reply(400,{error:'Check activity details'});
   const module=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
-  if(user.id==='d053b3a4-72fb-484e-8a76-20a911f5875e' && context.platform_role==='system_owner'){
-   const lookup=await module.rpc('ims_portal_owner_setup');
-   if(lookup.error)return reply(503,{error:'Owner mapping unavailable'});
-   if(!lookup.data){
-    const created=await module.auth.admin.createUser({email:'portal-owner-d053b3a4@tcms.example.invalid',email_confirm:true,user_metadata:{display_name:'Fernando Cossa — Portal Owner'}});
-    if(created.error||!created.data.user)return reply(503,{error:'Owner provisioning requires review'});
-    const mapped=await module.rpc('ims_portal_owner_setup',{p_local_id:created.data.user.id});
-    if(mapped.error)return reply(503,{error:'Owner mapping requires review'});
-   }
+  if(['access','request_access','access_roles','access_queue','access_history','access_decide'].includes(body.action)){
+   const trustedPayload=body.action==='request_access'?{reason:payload.reason,verified_label:context.display_name||user.email||user.id}:payload;
+   const result=await module.rpc('ims_portal_access',{p_actor:user.id,p_action:body.action,p_payload:trustedPayload});
+   if(result.error)return reply(result.error.code==='42501'?403:result.error.code==='40001'?409:400,{error:result.error.code==='40001'?'Request changed. Refresh and review again.':'IMS access operation refused'});
+   return reply(200,{data:result.data});
   }
   const dispatch=async(action:string,payload:unknown)=>module.rpc('ims_portal_dispatch',{p_portal_id:user.id,p_action:action,p_payload:payload});
   if(body.action==='file_upload'){

@@ -14,9 +14,10 @@ export async function showIMS(client,root,active){
  const button=(parent,text,job)=>{const b=node('button',text);b.type='button';b.addEventListener('click',()=>run(job));parent.append(b);return b;};
  const section=title=>{viewEpoch++;message.textContent='';view.replaceChildren(node('h2',title));return viewEpoch;};
  const current=e=>active()&&e===viewEpoch;
- const manager=()=>access.is_admin||access.role==='im_team';
- const leadership=()=>manager()||access.role==='leadership';
- const projectsManager=()=>leadership()||access.role==='department_head';
+ const can=op=>Array.isArray(access.operations)&&access.operations.includes(op);
+ const manager=()=>can('department_save');
+ const leadership=()=>can('audit');
+ const projectsManager=()=>can('project_save');
  const choices=(rows,label)=>[['','None'],...rows.map(r=>[String(r.id),r[label]||r.name||r.name_pt||r.id])];
  const select=(key,label,options,required=false)=>({key,label,choices:options,required});
  const text=(key,label,required=false)=>({key,label,required,maxLength:200});
@@ -30,10 +31,10 @@ export async function showIMS(client,root,active){
   const save=node('button',saveLabel);save.type='submit';f.append(save);f.addEventListener('submit',e=>{e.preventDefault();run(async()=>{save.disabled=true;try{await submit(Object.fromEntries(specs.map(s=>[s.key,typed(inputs[s.key].value,s)])));}finally{save.disabled=false;}});});wrap.append(f);parent.append(wrap);return wrap;
  };
  const card=(parent,title,lines=[])=>{const c=node('article');c.className='integration-preparation';c.append(node('h3',title));for(const line of lines)if(line)c.append(node('p',String(line)));parent.append(c);return c;};
- const loadRefs=async()=>{const [departments,locations,projects,staff]=await Promise.all(['departments','locations','projects','staff_names'].map(a=>request(a)));refs={departments,locations,projects,staff};};
+ const loadRefs=async()=>{const [departments,locations,projects,staff]=await Promise.all(['departments','locations','projects','staff_names'].map(a=>a==='staff_names'&&!can('staff_names')?Promise.resolve([]):request(a)));refs={departments,locations,projects,staff};};
  const exportCSV=(rows,filename)=>{const cols=Object.keys(rows[0]||{});const safe=x=>{let s=String(x??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};const data=[cols,...rows.map(r=>cols.map(c=>typeof r[c]==='object'?JSON.stringify(r[c]):r[c]))].map(r=>r.map(safe).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff'+data],{type:'text/csv;charset=utf-8'}));const a=node('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  async function activities(){const e=section('Activities');const rows=await request('list');if(!current(e))return;message.textContent=`${rows.length} activities loaded from IMS.`;
-  button(view,'Create activity',()=>activityForm());button(view,'Refresh activities',activities);button(view,'Export activities',()=>exportCSV(rows,'ims-activities.csv'));
+  if(can('activity_create'))button(view,'Create activity',()=>activityForm());button(view,'Refresh activities',activities);button(view,'Export activities',()=>exportCSV(rows,'ims-activities.csv'));
   const search=field(view,'search','Search activities',{maxLength:200});const list=node('div');view.append(list);
   const draw=()=>{list.replaceChildren();for(const r of rows.filter(r=>(r.session_name+' '+(r.location||'')).toLowerCase().includes(search.value.toLowerCase()))){const c=card(list,r.session_name,[`${r.session_date} · ${r.location||r.location_path||''} · ${r.workflow_status}`,`${r.present_count} present · ${r.absent_count} absent · ${r.file_count} files`]);button(c,'Open activity',()=>detail(r.id));}};search.addEventListener('input',draw);draw();
  }
@@ -43,17 +44,17 @@ export async function showIMS(client,root,active){
  }
  async function detail(id){const e=section('Activity details');const [rows,attendance,files]=await Promise.all([request('list'),request('attendance',{id}),request('files',{id})]);if(!current(e))return;const r=rows.find(x=>x.id===id);if(!r)throw Error('Activity unavailable.');
   const c=card(view,r.session_name,[`${r.session_date} · ${r.location||r.location_path||''}`,`Status: ${r.workflow_status}`,r.objectives&&'Objectives: '+r.objectives,r.results&&'Results: '+r.results,r.return_note&&'Review note: '+r.return_note]);button(c,'Back to activities',activities);
-  if(access.is_admin||r.workflow_status==='planned')button(c,'Edit activity',()=>activityForm(r));
-  for(const [status,action,label,allowed] of [['planned','submit','Submit for review',true],['submitted','verify','Verify activity',manager()||access.role==='department_head'],['verified','approve','Approve activity',leadership()]])if(r.workflow_status===status&&allowed)button(c,label,async()=>{await request(action,{id});await detail(id);message.textContent='Activity updated.';});
+  if(can('activity_edit')&&(access.is_admin||r.workflow_status==='planned'))button(c,'Edit activity',()=>activityForm(r));
+  for(const [status,action,label,allowed] of [['planned','submit','Submit for review',true],['submitted','verify','Verify activity',manager()||access.role==='department_head'],['verified','approve','Approve activity',leadership()]])if(r.workflow_status===status&&can(action))button(c,label,async()=>{await request(action,{id});await detail(id);message.textContent='Activity updated.';});
   if(['submitted','verified'].includes(r.workflow_status)&&projectsManager())button(c,'Return for correction',()=>noteForm('return',id));
   if(r.workflow_status==='approved'&&access.is_admin)button(c,'Reopen activity',()=>noteForm('reopen',id));
   if(access.is_admin)button(c,'Archive activity',async()=>{if(!confirm('Archive this activity? It can be restored from Archive.'))return;await request('activity_archive',{id});await activities();});
   view.append(node('h3','Attendance'));button(view,'Export attendance',()=>exportCSV(attendance,'ims-attendance-'+id+'.csv'));
   const attendanceForm=(row={})=>{const w=form(view,row.id?'Edit attendance':'Add attendance',[text('name','Participant name',true),select('status','Attendance status',[['Present','Present'],['Absent','Absent']],true)],{name:row.participant_name,status:row.attendance_status||'Present'},async p=>{await request(row.id?'attendance_edit':'attendance_create',{...p,id:row.id,session_id:id});await detail(id);message.textContent='Attendance saved.';},'Save attendance');w.scrollIntoView({block:'center',behavior:'smooth'});};
-  const open=access.is_admin||r.workflow_status!=='approved';if(open)button(view,'Add attendance',()=>attendanceForm());
+  const open=can('attendance_create')&&(access.is_admin||r.workflow_status!=='approved');if(open)button(view,'Add attendance',()=>attendanceForm());
   for(const a of attendance){const ac=card(view,a.participant_name,[a.attendance_status]);if(open)button(ac,'Edit attendance',()=>attendanceForm(a));if(access.is_admin)button(ac,'Archive attendance',async()=>{await request('attendance_archive',{id:a.id});await detail(id);});}
   if(!attendance.length)view.append(node('p','No attendance records yet.'));
-  view.append(node('h3','Files'));const upload=node('form');upload.id='ims-upload';upload.className='ims-form';const input=field(upload,'file','Choose file',{type:'file',required:true});input.accept='.pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv';const caption=field(upload,'caption','Caption',{maxLength:2000});const save=node('button','Upload file');save.type='submit';upload.append(node('p','Maximum 10 MB. Files remain private.'),save);view.append(upload);
+  view.append(node('h3','Files'));const upload=node('form');upload.id='ims-upload';upload.className='ims-form';const input=field(upload,'file','Choose file',{type:'file',required:true});input.accept='.pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv';const caption=field(upload,'caption','Caption',{maxLength:2000});const save=node('button','Upload file');save.type='submit';upload.append(node('p','Maximum 10 MB. Files remain private.'),save);if(can('file_upload_check'))view.append(upload);
   upload.addEventListener('submit',ev=>{ev.preventDefault();run(async()=>{const file=input.files[0];if(!file||!file.size||file.size>10485760)throw Error('Choose a file between 1 byte and 10 MB.');save.disabled=true;try{const data=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(String(fr.result).split(',')[1]);fr.onerror=reject;fr.readAsDataURL(file);});await request('file_upload',{id,name:file.name,mime:file.type||(/\.csv$/i.test(file.name)?'text/csv':/\.txt$/i.test(file.name)?'text/plain':''),caption:caption.value,base64:data});await detail(id);message.textContent='File uploaded and registered in IMS.';}finally{save.disabled=false;}});});
   for(const f of files){const fc=card(view,f.file_name,[f.caption,`${Math.ceil(f.size_bytes/1024)} KB · ${f.uploaded_by||''}`]);button(fc,'Download file',async()=>{const data=await request('file_download',{id:f.id});const url=new URL(data.url);if(url.origin!=='https://dstzkaygqvxhzmefirdr.supabase.co')throw Error('Invalid download address');const response=await fetch(url.href,{cache:'no-store'});if(!response.ok)throw Error('File download failed');const blob=await response.blob();if(blob.size!==Number(f.size_bytes))throw Error('Downloaded size does not match the file record');const objectUrl=URL.createObjectURL(blob);const a=node('a','Save '+f.file_name);a.href=objectUrl;a.download=f.file_name;fc.append(a);a.click();message.textContent='File received: '+f.file_name+' ('+blob.size+' bytes). Use Save if your browser did not start the download.';setTimeout(()=>{URL.revokeObjectURL(objectUrl);a.remove();},60000);});if(access.is_admin)button(fc,'Archive file',async()=>{await request('file_archive',{id:f.id});await detail(id);});}
   if(!files.length)view.append(node('p','No files attached.'));
@@ -68,7 +69,37 @@ export async function showIMS(client,root,active){
   for(const r of rows){const c=card(view,r.name||r.name_pt||r.display_name||r.email,[r.code,r.path,r.status,r.role,r.approved!==undefined?'Approved: '+(r.approved?'Yes':'No'):null]);if(can)button(c,'Edit record',()=>edit(r));}if(!rows.length)view.append(node('p','No records found.'));
  }
  async function archive(){const e=section('Archive');for(const [type,action,title]of [['activity','archived_activities','Activities'],['attendance','archived_attendance','Attendance'],['file','archived_files','Files']]){const rows=await request(action);if(!current(e))return;view.append(node('h3',title));for(const r of rows){const c=card(view,r.session_name||r.participant_name||r.file_name,[r.participant_name,r.file_name,r.archived_at]);button(c,'Restore '+type,async()=>{await request(type+'_restore',{id:r.id});await archive();});}if(!rows.length)view.append(node('p','No archived '+title.toLowerCase()+'.'));}}
+
+ async function accessManagement(){
+  const e=section('IMS access management');const [rows,roles,events]=await Promise.all([request('access_queue'),request('access_roles'),request('access_history')]);if(!current(e))return;
+  view.append(node('p','Only an IMS administrator approves module access. Portal accounts do not receive an IMS role automatically.'));
+  button(view,'Refresh access requests',accessManagement);
+  for(const row of rows){
+   const c=card(view,row.requester_label,[row.user_id,'Status: '+row.status,'Role: '+(row.role_code||'None'),'Request: '+row.reason,row.decision_reason&&'Decision: '+row.decision_reason]);
+   if(row.user_id===access.user_id||row.user_id==='d053b3a4-72fb-484e-8a76-20a911f5875e'){c.append(node('p','Protected account'));continue;}
+   form(c,'Decide access',[
+    select('status','Decision',[['approved','Approve / update role'],['rejected','Reject request'],['revoked','Revoke access']]),
+    select('role_code','IMS role',roles.map(r=>[r.code,r.name+' — '+r.description])),
+    {key:'reason',label:'Reason for decision',required:true,minLength:5,maxLength:500}
+   ],{status:'approved',role_code:row.role_code||'operator'},async p=>{await request('access_decide',{...p,user_id:row.user_id,version:row.version});await accessManagement();message.textContent='IMS authorization updated. The user can refresh the Portal.';},'Save access decision');
+  }
+  view.append(node('h3','Authorization history'));
+  const label=id=>rows.find(r=>r.user_id===id)?.requester_label||id;
+  for(const ev of events)card(view,label(ev.target_id),[ev.event+' · '+(ev.new_role||'No role granted'),ev.at,'Authorized by: '+label(ev.actor_id),ev.reason]);
+ }
+
  async function audit(){const e=section('Audit history');const rows=await request('audit');if(!current(e))return;button(view,'Export audit history',()=>exportCSV(rows,'ims-audit.csv'));for(const r of rows)card(view,r.label||r.table_name,[`${r.at} · ${r.user_name}`,`${r.action} · ${r.table_name} #${r.record_id}`]);}
- try{access=await request('access');if(!active())return;if(!access?.allowed){message.textContent='IMS access has not been assigned.';return;}root.append(nav,view);button(nav,'Overview',()=>dashboard());button(nav,'Activities',activities);button(nav,'Projects',()=>management('projects'));if(manager()){button(nav,'Departments',()=>management('departments'));button(nav,'Locations',()=>management('locations'));}if(leadership())button(nav,'Audit history',audit);if(access.is_admin){button(nav,'IMS staff',()=>management('staff'));button(nav,'Archive',archive);}await activities();}
+ try{access=await request('access');if(!active())return;if(!access?.allowed){message.textContent='IMS access has not been assigned.';renderIMSAccessRequest(root,client,access,active);return;}root.append(node('p','IMS role: '+access.role_code),nav,view);button(nav,'Overview',()=>dashboard());button(nav,'Activities',activities);button(nav,'Projects',()=>management('projects'));if(manager()){button(nav,'Departments',()=>management('departments'));button(nav,'Locations',()=>management('locations'));}if(leadership())button(nav,'Audit history',audit);if(access.is_admin){button(nav,'Access management',accessManagement);button(nav,'Archive',archive);}await activities();}
  catch(e){if(active()){root.replaceChildren(message);message.textContent=e.message;}}
+}
+
+export function renderIMSAccessRequest(root,client,state,active){
+ if(state?.allowed)return;
+ const section=node('section');section.className='integration-preparation';section.append(node('h3','Information Management System access'));
+ const status=node('p');status.setAttribute('role','status');section.append(status);root.append(section);
+ if(!state){status.textContent='Access service is unavailable. Try Check access again.';return;}
+ if(state.status==='pending'){status.textContent='Your request is pending approval by the IMS administrator.';return;}
+ status.textContent=state.status==='rejected'?'Your last request was rejected. You may submit a new request.':state.status==='revoked'?'Your IMS access was revoked. Submit a request if you need access again.':'Your account has no IMS role. Request access from the module administrator.';
+ const f=node('form');f.id='ims-access-request';const reason=field(f,'reason','Reason for IMS access',{required:true,minLength:5,maxLength:500});const save=node('button','Request IMS access');save.type='submit';f.append(save);section.append(f);
+ f.addEventListener('submit',async ev=>{ev.preventDefault();if(save.disabled||!active())return;save.disabled=true;try{await imsRequest(client,'request_access',{reason:reason.value.trim()});if(!active())return;f.remove();status.textContent='Request sent. Pending approval by the IMS administrator.';}catch(e){if(active()){status.textContent=e.message;save.disabled=false;}}});
 }
