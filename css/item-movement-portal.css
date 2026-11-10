@@ -1,0 +1,16 @@
+/* Integration controls only; original stylesheet remains unchanged. */
+.hidden,[hidden]{display:none!important}
+.header-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;gap:1rem}
+.role-badge{background:var(--border-color);padding:.2rem .5rem;border-radius:4px;font-size:.8rem;margin-left:10px}
+.integration-header,.portal-preferences,.segmented{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.integration-header{margin-bottom:1.5rem;justify-content:space-between}
+.integration-header #account-summary{width:100%;font-size:.85rem;color:var(--text-muted)}
+.segmented button{padding:.35rem .55rem;background:var(--card-bg);color:var(--text-main);border:1px solid var(--border-color)}
+.segmented button[aria-pressed="true"]{background:var(--primary-color);color:white}
+a{color:var(--primary-color)}
+#auth-status,#session-actions{margin:1rem 0}#session-actions{display:flex;gap:.5rem}
+#assign-role-form{flex-wrap:wrap}#assign-role-form>div{min-width:150px}
+.card{overflow-x:auto}button:disabled{opacity:.6;cursor:wait}
+:root[data-theme="dark"]{--bg-color:#101b2b;--card-bg:#19283b;--text-main:#edf3fb;--text-muted:#acbdd2;--border-color:#33475f;--primary-color:#5797ff}
+@media(max-width:650px){body{padding:1rem}.header-bar{flex-wrap:wrap}.header-bar h1{font-size:1.6rem}.forms-container{grid-template-columns:1fr}#admin-panel>div{grid-template-columns:1fr!important}}
+#assign-role-form{flex-direction:row} input,select{background:var(--card-bg);color:var(--text-main)}

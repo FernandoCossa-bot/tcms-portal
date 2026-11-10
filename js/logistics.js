@@ -1,4 +1,4 @@
-import {node,rawNode,field,setMessage,uiText} from './modules.js?v=20261110-logistics';
+import {node,rawNode,field,setMessage,uiText} from './modules.js?v=20261111-original';
 const endpoint='https://nxrgqzeoylialaiplfxp.supabase.co/functions/v1/portal-bridge';
 export async function logisticsRequest(client,action,payload={}){
  const {data:{session}}=await client.auth.getSession();
@@ -22,51 +22,62 @@ export function renderLogisticsRequest(root,client,access,active){
   finally{busy=false;save.disabled=false;}
  });
 }
+// Original Item Movement dashboard; Portal identity and server authorization adapter.
 export async function showLogistics(client,root,active,transportAllowed=false){
- const title=node('h2','Inventory & Movements');root.append(title);
- if(transportAllowed){const link=node('a','Open transportation');link.href='./transport.html';link.className='button';root.append(link);}
  const message=node('p','Checking inventory access…');message.setAttribute('role','status');root.append(message);
  const access=await logisticsRequest(client,'access');if(!active())return;
  if(access.allowed!==true){message.textContent='Inventory access is not assigned.';renderLogisticsRequest(root,client,access,active);return;}
- setMessage(message,'Inventory role: {role}',{role:access.role},['role']);
- const nav=node('nav');nav.className='ims-tabs';const view=node('section');view.className='ims-view';root.append(nav,view);
+ root.append(document.querySelector('#original-dashboard').content.cloneNode(true));
+ const $=id=>root.querySelector('#'+id);
  const request=(action,payload={})=>logisticsRequest(client,action,payload);
- let busy=false,epoch=0;
- const run=async job=>{if(busy||!active())return;busy=true;root.setAttribute('aria-busy','true');try{await job();}catch(e){if(active())setMessage(message,'{error} Refresh before retrying an uncertain save.',{error:e.message},['error']);}finally{busy=false;root.setAttribute('aria-busy','false');}};
- const button=(parent,label,job)=>{const b=node('button',label);b.type='button';b.addEventListener('click',()=>run(job));parent.append(b);return b;};
- const section=label=>{epoch++;view.replaceChildren(node('h3',label));return epoch;};
- const form=(label,specs,saveLabel,submit)=>{
-  const f=node('form');f.className='ims-form';f.id='inventory-form-'+Math.random().toString(36).slice(2);f.append(node('h3',label));const inputs={};
-  for(const [key,text,options]of specs)inputs[key]=field(f,key,text,options);
-  const save=node('button',saveLabel);save.type='submit';f.append(save);view.append(f);
-  f.addEventListener('submit',e=>{e.preventDefault();run(async()=>{save.disabled=true;try{await submit(Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,v.value])));}finally{save.disabled=false;}});});return f;
- };
- const table=(headers,rows)=>{const wrap=node('div');wrap.style.overflowX='auto';const t=node('table'),head=node('thead'),hr=node('tr'),body=node('tbody');for(const h of headers){const th=node('th',h);th.scope='col';hr.append(th);}head.append(hr);for(const cells of rows){const tr=node('tr');for(const c of cells){const td=node('td');td.append(c);tr.append(td);}body.append(tr);}t.append(head,body);wrap.append(t);view.append(wrap);};
- async function stock(){const e=section('Current stock');const rows=await request('stock');if(!active()||e!==epoch)return;
-  table(['Item','Quantity'],rows.map(r=>[rawNode('span',r.name),rawNode('span',r.current_stock)]));
-  if(!rows.length)view.append(node('p','No items yet.'));
-  if(access.level>=2)form('Add item',[['name','Item name',{required:true,maxLength:200}]],'Save item',async p=>{await request('add_item',p);await stock();message.textContent='Item saved.';});
- }
- async function movements(){const e=section('Stock movements');const [rows,items]=await Promise.all([request('movements'),request('stock')]);if(!active()||e!==epoch)return;
-  view.append(node('p','Showing up to 500 recent movements.'));
-  table(['Item','Movement type','Quantity','Date','Actions'],rows.map(r=>{const actions=node('span');if(access.level>=3)button(actions,'Edit',async()=>{section('Correct movement');view.append(rawNode('p',r.item_name));form('Correct quantity',[['quantity','Quantity',{type:'number',required:true,min:1,max:2147483647,step:1,value:r.quantity}]],'Save correction',async p=>{await request('edit_movement',{id:r.id,quantity:Number(p.quantity),previous_quantity:r.quantity});await movements();message.textContent='Movement saved.';});button(view,'Cancel',movements);});return [rawNode('span',r.item_name),node('span',r.movement_type),rawNode('span',r.quantity),rawNode('span',r.movement_date),actions];}));
-  if(access.level>=2&&items.length)form('Record movement',[
-   ['item_id','Item',{required:true,choices:items.map(i=>[String(i.id),i.name,true])}],
-   ['movement_type','Movement type',{required:true,choices:[['IN','IN'],['OUT','OUT']]}],
-   ['quantity','Quantity',{type:'number',required:true,min:1,max:2147483647,step:1}]
-  ],'Save movement',async p=>{await request('add_movement',{item_id:Number(p.item_id),movement_type:p.movement_type,quantity:Number(p.quantity)});await movements();message.textContent='Movement saved.';});
- }
- async function queue(){const e=section('Inventory access management');const rows=await request('queue');if(!active()||e!==epoch)return;
-  for(const r of rows){const card=node('article');card.className='tool-card';card.append(rawNode('h3',r.display_name),rawNode('p',r.reason),node('p',{key:'Access status: {status}',values:{status:r.status},labels:['status']}));view.append(card);
-   if(r.protected_owner){card.append(node('p','Protected System Owner'));continue;}
-   button(card,'Review access',async()=>{section('Review inventory access');view.append(rawNode('h3',r.display_name));form('Assign module access',[
-    ['status','Decision',{choices:[['approved','Approve'],['rejected','Reject'],['revoked','Revoke']]}],
-    ['role','Role',{value:r.role_code||'VIEWER',choices:[['VIEWER','Viewer'],['OPERATOR','Operator'],['MANAGER','Manager'],['ADMIN','Administrator']]}],
-    ['reason','Reason for change',{required:true,minLength:5,maxLength:500}]
-   ],'Save access',async p=>{if(!window.confirm(uiText('Save inventory access for {name}?',{name:r.display_name})))return;await request('decide',{...p,portal_id:r.portal_id,version:r.version});await queue();message.textContent='Access decision saved.';});button(view,'Cancel',queue);});
+ $('logout-btn').addEventListener('click',()=>document.querySelector('#sign-out').click());
+ let busy=false,accounts=[];
+ $('user-role-display').textContent=access.role+' (L'+access.level+')';
+ $('user-role-display').setAttribute('data-user-content','');
+ $('forms-container').classList.toggle('hidden',access.level<2);
+ $('admin-panel').classList.toggle('hidden',access.level<4);
+ $('th-action').classList.toggle('hidden',access.level<3);
+ if(transportAllowed){const a=node('a','Open transportation');a.href='./transport.html';root.prepend(a);}
+ const row=(target,values)=>{const tr=document.createElement('tr');for(const value of values){const td=document.createElement('td');if(typeof value==='object')td.append(value);else {td.textContent=String(value??'');td.setAttribute('data-user-content','');}tr.append(td);}target.append(tr);};
+ const button=(label,job)=>{const b=node('button',label);b.type='button';b.addEventListener('click',()=>run(job));return b;};
+ const run=async job=>{if(busy||!active())return;busy=true;root.setAttribute('aria-busy','true');root.querySelectorAll('button').forEach(b=>b.disabled=true);try{await job();}catch(e){if(active()){setMessage(message,'{error} Refresh before retrying an uncertain save.',{error:e.message},['error']);if(e.message==='This operation is not permitted.'){ $('dashboard-section').classList.add('hidden');}}}finally{busy=false;if(active()){root.removeAttribute('aria-busy');root.querySelectorAll('button').forEach(b=>b.disabled=false);}}};
+ async function refresh(){
+  const [items,movements]=await Promise.all([request('stock'),request('movements')]);if(!active())return;
+  $('stock-tbody').replaceChildren();$('movement-tbody').replaceChildren();$('movement-item').replaceChildren();
+  const empty=node('option','-- Choose Item --');empty.value='';$('movement-item').append(empty);
+  for(const item of items){row($('stock-tbody'),[item.name,item.current_stock]);const opt=rawNode('option',item.name);opt.value=item.id;$('movement-item').append(opt);}
+  $('total-items-count').textContent=items.length;$('total-movements-count').textContent=movements.length;
+  for(const m of movements){const cells=[new Date(m.movement_date).toLocaleString(),m.item_name,m.movement_type,m.quantity];
+   if(access.level>=3)cells.push(button('Edit',async()=>{
+    const value=window.prompt(uiText('Enter new quantity:'),String(m.quantity));if(value===null)return;
+    const quantity=Number(value);if(!Number.isInteger(quantity)||quantity<1||quantity>2147483647)throw Error(uiText('Enter a positive whole number.'));
+    await request('edit_movement',{id:m.id,quantity,previous_quantity:m.quantity});if(!active())return;await refresh();message.textContent='Movement saved.';
+   }));row($('movement-tbody'),cells);
   }
+  if(access.level>=4)await refreshAccess();
  }
- async function history(){const e=section('Inventory audit history');const rows=await request('audit');if(!active()||e!==epoch)return;table(['Date','Action','Actor','Target'],rows.map(r=>[rawNode('span',r.created_at),rawNode('span',r.action),rawNode('span',r.actor),rawNode('span',r.target||'')]));}
- button(nav,'Current stock',stock);button(nav,'Stock movements',movements);if(access.level>=4){button(nav,'Manage inventory access',queue);button(nav,'Inventory audit history',history);}
- await run(stock);
+ async function refreshAccess(){
+  const [rows,history]=await Promise.all([request('queue'),request('audit')]);if(!active())return;accounts=rows;
+  $('accounts-tbody').replaceChildren();$('history-tbody').replaceChildren();$('target-user').replaceChildren();
+  const empty=node('option','-- Choose account --');empty.value='';$('target-user').append(empty);
+  for(const a of accounts){
+   const actions=document.createElement('span');
+   if(a.protected_owner)actions.append(node('span','Protected System Owner'));
+   else {const opt=rawNode('option',a.display_name+' · '+a.status);opt.value=a.portal_id;$('target-user').append(opt);actions.append(button('Review access',async()=>{$('target-user').value=a.portal_id;$('target-role').value=a.role_code||'VIEWER';$('target-decision').value='approved';$('target-user').focus();}));}
+   row($('accounts-tbody'),[a.display_name,(a.role_code||'—')+' · '+a.status,actions]);
+  }
+  for(const h of history)row($('history-tbody'),[accounts.find(a=>a.portal_id===h.target)?.display_name||h.target||'—',h.action,new Date(h.created_at).toLocaleString()]);
+ }
+ $('item-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{
+  await request('add_item',{name:$('item-name').value.trim()});if(!active())return;$('item-form').reset();await refresh();message.textContent='Item saved.';
+ });});
+ $('movement-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{
+  await request('add_movement',{item_id:Number($('movement-item').value),movement_type:$('movement-type').value,quantity:Number($('movement-quantity').value)});if(!active())return;$('movement-form').reset();await refresh();message.textContent='Movement saved.';
+ });});
+ $('assign-role-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{
+  const a=accounts.find(a=>a.portal_id===$('target-user').value);if(!a||a.protected_owner)throw Error('This operation is not permitted.');
+  if(!window.confirm(uiText('Save inventory access for {name}?',{name:a.display_name})))return;
+  await request('decide',{portal_id:a.portal_id,version:a.version,status:$('target-decision').value,role:$('target-role').value,reason:$('target-reason').value.trim()});if(!active())return;$('assign-role-form').reset();await refreshAccess();message.textContent='Access decision saved.';
+ });});
+ await run(async()=>{await refresh();if(active())message.textContent='';});
 }

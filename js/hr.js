@@ -1,4 +1,4 @@
-import {node,field,rawNode} from './modules.js?v=20261110-logistics';
+import {node,field,rawNode} from './modules.js?v=20261111-original';
 let epoch=0,root;
 export function clearHR(){epoch++;root?.replaceChildren();}
 export async function showHR(client){

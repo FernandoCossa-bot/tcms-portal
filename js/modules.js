@@ -104,32 +104,32 @@ export async function showModules(client, context, page) {
       if (error || !Array.isArray(catalog) || catalog.length !== 4) throw new Error('Catalog unavailable');
             let imsAccess = false, imsState = null;
       try {
-        const ims = await import('./ims.js?v=20261110-logistics');
+        const ims = await import('./ims.js?v=20261111-original');
         imsState = await ims.imsRequest(client, 'access');
         imsAccess = imsState?.allowed === true;
       } catch { /* Fail closed: other modules remain usable. */ }
       if (current !== epoch) return;
       let inventoryAccess=false,inventoryState=null;
-      const logistics=await import('./logistics.js?v=20261110-logistics');
+      const logistics=await import('./logistics.js?v=20261111-original');
       try{inventoryState=await logistics.logisticsRequest(client,'access');inventoryAccess=inventoryState?.allowed===true;}catch{}
       if(current!==epoch)return;
       renderPortal(root, permissions, context, catalog, imsAccess, inventoryAccess);
       if(!inventoryAccess)logistics.renderLogisticsRequest(root,client,inventoryState,()=>current===epoch);
-      if(!imsAccess){const ims=await import('./ims.js?v=20261110-logistics');if(current===epoch)ims.renderIMSAccessRequest(root,client,imsState,()=>current===epoch);}
+      if(!imsAccess){const ims=await import('./ims.js?v=20261111-original');if(current===epoch)ims.renderIMSAccessRequest(root,client,imsState,()=>current===epoch);}
     } else if (page === "users") await directory(client, context, current, message);
     else if (page === "ims") {
-      const ims = await import('./ims.js?v=20261110-logistics');
+      const ims = await import('./ims.js?v=20261111-original');
       if (current !== epoch) return;
       await ims.showIMS(client, root, () => current === epoch);
     }
     else if(page === 'logistics'){
-      const logistics=await import('./logistics.js?v=20261110-logistics');
+      const logistics=await import('./logistics.js?v=20261111-original');
       if(current!==epoch)return;
       await logistics.showLogistics(client,root,()=>current===epoch,permissions.view===true);
     }
     else if (page === "transport") {
       if (!permissions.view) { message.textContent = "You do not have transport access."; return; }
-      const transport = await import("./transport.js?v=20261110-logistics");
+      const transport = await import("./transport.js?v=20261111-original");
       await transport.renderTransport(client, context, permissions, root, () => current === epoch);
     }
   } catch (error) {
@@ -138,7 +138,7 @@ export async function showModules(client, context, page) {
 }
 async function directory(client, context, current, message) {
   if (context.platform_role === 'system_owner' && context.can_enter === true) {
-    const integration = await import('./integration-preparation.js?v=20261110-logistics');
+    const integration = await import('./integration-preparation.js?v=20261111-original');
     if (current !== epoch) return;
     integration.renderIntegrationPreparation(root, context);
   }
