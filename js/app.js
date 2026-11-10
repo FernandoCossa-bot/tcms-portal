@@ -163,7 +163,7 @@ async function initialize() {
     if (page === "register") registration = await import("./registration.js");
     if (page === "users") userManagement = await import("./users.js");
     if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js");
-    if (protectedPage) modules = await import("./modules.js");
+    if (protectedPage) modules = await import("./modules.js?v=20261110-glass");
     const [config, library] = await Promise.all([
       import("./config.js"),
       import("https://esm.sh/@supabase/supabase-js@2.117.2"),
