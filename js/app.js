@@ -1,3 +1,4 @@
+function accountCopy(element,name,role){const key='{name} · {role}',values={name,role},labels=['role'];const output=`${name} · ${role}`;element.textContent=output;element.tcmsMessage={key,values,labels,output};element.setAttribute?.('data-i18n-message','');globalThis.TCMSI18n?.renderMessage(element);}
 // Shared session controller. Database RPCs, not navigation, enforce authorization.
 const page = document.body.dataset.page;
 const status = document.querySelector("#auth-status");
@@ -96,7 +97,7 @@ async function checkAccess() {
       status.textContent = "Administrator access is required to manage users.";
       return;
     }
-    summary.textContent = `${context.display_name || session.user.email} · ${roles[context.platform_role] || (context.has_hr_access ? "Human Resources" : "Member")}`;
+    accountCopy(summary,context.display_name || session.user.email,roles[context.platform_role] || (context.has_hr_access ? "Human Resources" : "Member"));
     workspace.hidden = false;
     status.textContent = "Your account is active.";
     if (manageUsersLink) manageUsersLink.hidden = !administrator;
@@ -157,15 +158,15 @@ logout.addEventListener("click", async () => {
 
 async function initialize() {
   try {
-    if (page === 'hr') hr = await import('./hr.js');
-    if (page === 'password') passwordChange = await import('./password-change.js');
+    if (page === 'hr') hr = await import('./hr.js?v=20261110-i18n');
+    if (page === 'password') passwordChange = await import('./password-change.js?v=20261110-i18n');
     // Import registration only where its form exists.
-    if (page === "register") registration = await import("./registration.js");
-    if (page === "users") userManagement = await import("./users.js");
-    if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js");
-    if (protectedPage) modules = await import("./modules.js?v=20261110-glass");
+    if (page === "register") registration = await import("./registration.js?v=20261110-i18n");
+    if (page === "users") userManagement = await import("./users.js?v=20261110-i18n");
+    if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js?v=20261110-i18n");
+    if (protectedPage) modules = await import("./modules.js?v=20261110-i18n");
     const [config, library] = await Promise.all([
-      import("./config.js"),
+      import("./config.js?v=20261110-i18n"),
       import("https://esm.sh/@supabase/supabase-js@2.117.2"),
     ]);
     if (!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(config.SUPABASE_URL)

@@ -1,4 +1,4 @@
-import {node,field} from './modules.js';
+import {node,field,rawNode} from './modules.js?v=20261110-i18n';
 let epoch=0,root;
 export function clearHR(){epoch++;root?.replaceChildren();}
 export async function showHR(client){
@@ -23,8 +23,8 @@ export async function showHR(client){
   if(current!==epoch)return;
   if(error || !Array.isArray(data)){status.textContent=message(error);refresh.disabled=false;return;}
   for(const employee of data.slice(0,20)){
-   const card=node('article');card.append(node('h3',employee.display_name || employee.email),node('p',employee.email),node('p',`Account: ${employee.account_status}`));list.append(card);
-   if(employee.protected){card.append(node('p',`${employee.department || '—'} · ${employee.position || '—'}`),node('p','Protected administrative account.'));continue;}
+   const card=node('article');card.append(rawNode('h3',employee.display_name || employee.email),rawNode('p',employee.email),node('p',{key:'Account: {status}',values:{status:employee.account_status},labels:['status']}));list.append(card);
+   if(employee.protected){card.append(rawNode('p',`${employee.department || '—'} · ${employee.position || '—'}`),node('p','Protected administrative account.'));continue;}
    const edit=node('form');edit.id=`employee-${employee.user_id}`;
    field(edit,'name','Full name',{value:employee.display_name,required:true,minLength:2,maxLength:120});
    field(edit,'department','Department',{value:employee.department,required:true,maxLength:120});

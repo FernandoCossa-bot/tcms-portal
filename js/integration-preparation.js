@@ -67,7 +67,7 @@ export function renderIntegrationPreparation(root,context){
     try{
       const value=JSON.parse(await selected.text());const result=validateIntegration(value);
       if(root.isConnected===false)return;
-      status.textContent=result.valid?'Configuration format accepted. This review has not saved, connected or activated the module.':result.errors.join(' ');
+      if(result.valid)status.textContent='Configuration format accepted. This review has not saved, connected or activated the module.';else status.replaceChildren(...result.errors.map(error=>el('span',error+' ')));
     }catch{status.textContent='Unable to read configuration. Use the supplied JSON template.';}
     finally{file.value='';}
   });

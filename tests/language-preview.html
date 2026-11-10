@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local language verification</title><link rel="stylesheet" href="../css/styles.css"><script src="../js/ui.js?v=20261110-i18n"></script></head><body data-page="ims"><header><p>TCMS</p><p>Local verification — fictional records</p></header><main><nav id="scenarios"></nav><p id="test-result" role="status"></p><section id="workspace"><div id="module-content"></div><div id="hr-content"></div></section></main><script type="module">
+import {renderTransport} from '../js/transport.js?v=20261110-i18n';
+import {showHR,clearHR} from '../js/hr.js?v=20261110-i18n';
+import {showIMS} from '../js/ims.js?v=20261110-i18n';
+import {showHomeTools,clearHomeTools} from '../js/home-tools.js?v=20261110-i18n';
+import {renderPortal} from '../js/modules.js?v=20261110-i18n';
+const root=document.querySelector('#module-content');let epoch=0;
+const activity={id:1,session_name:'Save',session_date:'2026-11-10',location:'Present',workflow_status:'planned',present_count:1,absent_count:0,file_count:0,objectives:'Projects',results:'<script>literal text<\/script>'};
+const store={access:{allowed:true,is_admin:true,role_code:'administrator',operations:['activity_create','activity_edit','attendance_create','file_upload_check','department_save','project_save','audit','submit']},list:[activity],attendance:[{id:1,participant_name:'Present',attendance_status:'Present'}],files:[],departments:[{id:1,name_pt:'Save'}],locations:[],projects:[],staff_names:[],dashboard:{activities:1,present:1,absent:0,participants:1,files:0,by_status:{planned:1}},access_queue:[{user_id:'test',requester_label:'Save',status:'pending',reason:'Activities',version:1}],access_roles:[{code:'operator',name:'Operator',description:'View, create and edit activities, attendance and files; submit for review.'}],access_history:[],archived_activities:[],archived_attendance:[],archived_files:[],audit:[]};
+window.fetch=async(url,options)=>{if(!String(url).endsWith('/portal-bridge'))throw Error('Unexpected network request');const {action}=JSON.parse(options.body);return{ok:true,json:async()=>({data:store[action]??[]})};};
+const client={auth:{getSession:async()=>({data:{session:{access_token:'local-fixture-not-a-token'}}})},rpc:async(name,args)=>{
+ if(name==='tcms_api')return{data:args.p_action==='vehicles'?[{id:1,registration:'LOCAL-TEST',name:'Save',capacity:4,mileage:0,status:'available'}]:[]};
+ if(name==='core_hr_directory')return{data:[{user_id:'fixture',display_name:'Save',email:'test@example.invalid',account_status:'active',department:'Education',position:'Projects',version:1}]};
+ if(name==='core_get_access_control')return{data:{access_enabled:true,version:1}};
+ throw Error('Writes are disabled in this local preview');
+},functions:{invoke:async()=>{throw Error('Writes are disabled in this local preview');}}};
+function scenario(name,action){const button=document.createElement('button');button.textContent=name;button.onclick=async()=>{epoch++;clearHR();clearHomeTools();root.replaceChildren();try{await action(epoch);}catch(error){document.querySelector('#test-result').textContent=error.message;}};document.querySelector('#scenarios').append(button);}
+scenario('IMS administrator',e=>showIMS(client,root,()=>epoch===e));
+scenario('Transport dispatcher',e=>renderTransport(client,{user_id:'fixture'},{view:true,manage_fleet:true,view_all:true,create_request:true,edit_request:true,approve_request:true},root,()=>epoch===e));
+scenario('Human Resources',()=>showHR(client));
+scenario('Owner settings',()=>showHomeTools(client,{user_id:'owner',platform_role:'system_owner',display_name:'Save'}));
+scenario('Owner homepage',()=>renderPortal(root,{view:true},{platform_role:'system_owner',has_hr_access:true},['foundation','education','farm','logistics'].map(code=>({code,name:code,integration_status:code==='logistics'?'transport_available':'pending'})),true));
+document.querySelector('#scenarios button').click();
+</script></body></html>

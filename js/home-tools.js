@@ -1,3 +1,6 @@
+
+function uiText(key,values={},labels=[]){return globalThis.TCMSI18n?.t(key,values,labels)||key.replace(/\{(\w+)\}/g,(_,n)=>String(values[n]??''));}
+function messageCopy(element,key,values={},labels=[]){const output=key.replace(/\{(\w+)\}/g,(_,n)=>String(values[n]??''));element.textContent=output;element.tcmsMessage={key,values,labels,output};element.setAttribute?.('data-i18n-message','');globalThis.TCMSI18n?.renderMessage(element);}
 // These controls use the existing identity-foundation RPCs.
 let container;
 let generation = 0;
@@ -49,7 +52,7 @@ export async function showHomeTools(client, context, { platform = true, compact 
       if (error || data?.user_id !== context.user_id) throw new Error("Save failed");
       feedback.textContent = "Your name was saved.";
       const role = {system_owner:"System Owner",restricted_admin:"Restricted Administrator"}[data.platform_role] || "Member";
-      document.querySelector("#account-summary").textContent = `${data.display_name} · ${role}`;
+      messageCopy(document.querySelector("#account-summary"),"{name} · {role}",{name:data.display_name,role},["role"]);
     } catch {
       if (request === generation) feedback.textContent = "Unable to confirm the change. Select Check access before retrying.";
     } finally { if (request === generation) save.disabled = false; }
@@ -101,9 +104,9 @@ export async function showHomeTools(client, context, { platform = true, compact 
       state.textContent = "Enter a reason containing 5 to 500 characters.";
       reason.focus(); return;
     }
-    if (!window.confirm(settings.access_enabled
+    if (!window.confirm(uiText(settings.access_enabled
       ? "Disable access for all other users? Your Owner access will remain available."
-      : "Restore platform access? Each account will still require its own permissions.")) return;
+      : "Restore platform access? Each account will still require its own permissions."))) return;
     busy = true;
     toggle.disabled = reload.disabled = true;
     try {

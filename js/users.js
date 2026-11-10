@@ -1,3 +1,6 @@
+
+function uiText(key,values={},labels=[]){return globalThis.TCMSI18n?.t(key,values,labels)||key.replace(/\{(\w+)\}/g,(_,n)=>String(values[n]??''));}
+function messageCopy(element,key,values={},labels=[]){const output=key.replace(/\{(\w+)\}/g,(_,n)=>String(values[n]??''));element.textContent=output;element.tcmsMessage={key,values,labels,output};element.setAttribute?.('data-i18n-message','');globalThis.TCMSI18n?.renderMessage(element);}
 // All directory reads and decisions go through authorized database functions.
 const list = document.querySelector("#pending-list");
 const status = document.querySelector("#review-status");
@@ -32,10 +35,11 @@ function element(tag, text) {
   return node;
 }
 
+function rawElement(tag,text){const n=element(tag,text);n.setAttribute?.("data-user-content","");return n;}
 function renderRow(row) {
   const card = element("article");
-  card.append(element("h3", row.display_name || "Name not provided"),
-    element("p", row.email || "Email unavailable"),
+  card.append(row.display_name?rawElement("h3", row.display_name):element("h3","Name not provided"),
+    row.email?rawElement("p", row.email):element("p","Email unavailable"),
     element("p", row.email_verified ? "Email confirmed" : "Email not confirmed"));
   const form = element("form");
   const fields = element("fieldset");
@@ -67,7 +71,7 @@ function renderRow(row) {
       reason.focus();
       return;
     }
-    if (!window.confirm(`${decision === "approve" ? "Approve" : "Reject"} the account for ${row.email}?`)) return;
+    if (!window.confirm(uiText("{decision} the account for {email}?",{decision:decision === "approve" ? "Approve" : "Reject",email:row.email},["decision"]))) return;
     saving = true;
     const request = generation;
     list.querySelectorAll("fieldset").forEach(node => { node.disabled = true; });
@@ -107,18 +111,18 @@ async function loadUsers(prefix = "") {
   const request = ++generation;
   list.replaceChildren();
   refresh.disabled = previous.disabled = next.disabled = true;
-  status.textContent = `${prefix} Loading pending accounts…`.trim();
+  messageCopy(status,"{prefix} {message}",{prefix,message:"Loading pending accounts…"},["prefix","message"]);
   try {
     const { data, error } = await client.rpc("core_list_pending_accounts", { p_offset: offset });
     if (request !== generation || !available) return;
     if (error) throw error;
     if (!Array.isArray(data)) throw new Error("Unexpected directory response");
     data.slice(0, 20).forEach(renderRow);
-    status.textContent = `${prefix} ${data.length ? "Review a pending account below." : "No pending accounts on this page."}`.trim();
+    messageCopy(status,"{prefix} {message}",{prefix,message:data.length ? "Review a pending account below." : "No pending accounts on this page."},["prefix","message"]);
     previous.disabled = offset === 0;
     next.disabled = data.length <= 20;
   } catch (error) {
-    if (request === generation) status.textContent = `${prefix} ${explain(error)}`.trim();
+    if (request === generation) messageCopy(status,"{prefix} {message}",{prefix,message:explain(error)},["prefix","message"]);
   } finally {
     if (request === generation && available) refresh.disabled = false;
   }

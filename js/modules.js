@@ -9,9 +9,18 @@ export const permissionLabels = {
 };
 export function node(tag, text) {
   const n = document.createElement(tag);
-  if (text !== undefined) n.textContent = text;
+  if (text && typeof text === 'object' && text.key) setMessage(n,text.key,text.values,text.labels);
+  else if (text !== undefined) n.textContent = text;
   return n;
 }
+// Explicit message parameters keep user content separate from interface translations.
+export function setMessage(element,key,values={},labels=[]) {
+  const output=key.replace(/\{(\w+)\}/g,(_,name)=>String(values[name]??''));
+  element.textContent=output;element.tcmsMessage={key,values,labels,output};
+  element.setAttribute('data-i18n-message','');globalThis.TCMSI18n?.renderMessage(element);
+}
+export function rawNode(tag,text){const n=node(tag,text);n.setAttribute('data-user-content','');return n;}
+export function uiText(key,values={},labels=[]){return globalThis.TCMSI18n?.t(key,values,labels)||key.replace(/\{(\w+)\}/g,(_,name)=>String(values[name]??''));}
 export async function api(client, action, payload = {}) {
   const { data, error } = await client.rpc("tcms_api", { p_action: action, p_payload: payload });
   if (error) throw error;
@@ -31,8 +40,8 @@ export function field(form, name, labelText, options = {}) {
   input.name = name;
   input.id = `${form.id}-${name}`;
   label.htmlFor = input.id;
-  if (options.choices) for (const [value, text] of options.choices) {
-    const opt = node("option", text); opt.value = value; input.append(opt);
+  if (options.choices) for (const [value, text, literal] of options.choices) {
+    const opt = literal ? rawNode("option", text) : node("option", text); opt.value = value; input.append(opt);
   } else input.type = options.type || "text";
   for (const key of ["required", "min", "max", "minLength", "maxLength", "step"]) {
     if (options[key] !== undefined) input[key] = options[key];
@@ -95,22 +104,22 @@ export async function showModules(client, context, page) {
       if (error || !Array.isArray(catalog) || catalog.length !== 4) throw new Error('Catalog unavailable');
             let imsAccess = false, imsState = null;
       try {
-        const ims = await import('./ims.js');
+        const ims = await import('./ims.js?v=20261110-i18n');
         imsState = await ims.imsRequest(client, 'access');
         imsAccess = imsState?.allowed === true;
       } catch { /* Fail closed: other modules remain usable. */ }
       if (current !== epoch) return;
       renderPortal(root, permissions, context, catalog, imsAccess);
-      if(!imsAccess){const ims=await import('./ims.js');if(current===epoch)ims.renderIMSAccessRequest(root,client,imsState,()=>current===epoch);}
+      if(!imsAccess){const ims=await import('./ims.js?v=20261110-i18n');if(current===epoch)ims.renderIMSAccessRequest(root,client,imsState,()=>current===epoch);}
     } else if (page === "users") await directory(client, context, current, message);
     else if (page === "ims") {
-      const ims = await import('./ims.js');
+      const ims = await import('./ims.js?v=20261110-i18n');
       if (current !== epoch) return;
       await ims.showIMS(client, root, () => current === epoch);
     }
     else if (page === "transport") {
       if (!permissions.view) { message.textContent = "You do not have transport access."; return; }
-      const transport = await import("./transport.js");
+      const transport = await import("./transport.js?v=20261110-i18n");
       await transport.renderTransport(client, context, permissions, root, () => current === epoch);
     }
   } catch (error) {
@@ -119,7 +128,7 @@ export async function showModules(client, context, page) {
 }
 async function directory(client, context, current, message) {
   if (context.platform_role === 'system_owner' && context.can_enter === true) {
-    const integration = await import('./integration-preparation.js');
+    const integration = await import('./integration-preparation.js?v=20261110-i18n');
     if (current !== epoch) return;
     integration.renderIntegrationPreparation(root, context);
   }
@@ -146,8 +155,8 @@ async function directory(client, context, current, message) {
   };
   const render = row => {
     const card = node("article");
-    card.append(node("h3", row.display_name || row.email),
-      node("p", `${row.email} · ${row.platform_role} · ${row.account_status}`));
+    card.append(rawNode("h3", row.display_name || row.email),
+      node("p", {key:"{email} · {role} · {status}",values:{email:row.email,role:row.platform_role,status:row.account_status},labels:["role","status"]}));
     records.append(card);
     const protectedUser = row.user_id === context.user_id || row.platform_role === "system_owner"
       || (context.platform_role === "restricted_admin" && row.platform_role !== "member");
@@ -176,7 +185,7 @@ async function directory(client, context, current, message) {
         const value = form.elements[key].value;
         if (value !== "default") overrides[key] = value;
       }
-      if (!window.confirm(`Save transport permissions for ${row.email}?`)) return;
+      if (!window.confirm(uiText("Save transport permissions for {email}?",{email:row.email}))) return;
       saving = true; save.disabled = true; message.textContent = "Saving permissions…";
       try {
         const result = await api(client, "set_permissions", {

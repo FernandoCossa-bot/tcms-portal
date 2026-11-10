@@ -1,4 +1,4 @@
-import { api, node, field, errorText } from "./modules.js";
+import { api, node, field, errorText, rawNode } from "./modules.js?v=20261110-i18n";
 
 // Form dates are explicitly Mozambique time (UTC+02:00), independent of device timezone.
 export function toMozambiqueInput(iso) {
@@ -77,7 +77,7 @@ export async function renderTransport(client, context, permissions, root, alive)
     form.append(node("h2", row.id ? "Edit transport request" : "New transport request"),
       node("p", "All departure and return times below use Mozambique time (UTC+02:00)."));
     field(form, "vehicle_id", "Vehicle", { value: row.vehicle_id || "", required: true,
-      choices: [["", "Select a vehicle"], ...vehicles.map(v => [v.id, `${v.registration} — ${v.name} (${v.capacity} passengers; ${v.status})`])],
+      choices: [["", "Select a vehicle"], ...vehicles.map(v => [v.id, {key:"{registration} — {name} ({capacity} passengers; {status})",values:{registration:v.registration,name:v.name,capacity:v.capacity,status:v.status},labels:["status"]}])],
     });
     field(form, "destination", "Destination", { value: row.destination || "", required: true, maxLength: 200 });
     field(form, "purpose", "Purpose", { value: row.purpose || "", required: true, maxLength: 500 });
@@ -115,8 +115,8 @@ export async function renderTransport(client, context, permissions, root, alive)
       if (!v.length) fleet.append(node("p", "No vehicles registered."));
       for (const item of v) {
         const card = node("article");
-        card.append(node("h3", `${item.registration} — ${item.name}`),
-          node("p", `${item.capacity} passengers · ${item.mileage} km · ${item.status}`));
+        card.append(rawNode("h3", `${item.registration} — ${item.name}`),
+          node("p",{key:"{capacity} passengers · {mileage} km · {status}",values:{capacity:item.capacity,mileage:item.mileage,status:item.status},labels:["status"]}));
         if (permissions.manage_fleet) {
           const edit = node("button", "Edit vehicle");
           edit.addEventListener("click", () => { if (!saving) vehicleForm(item); }); card.append(edit);
@@ -133,11 +133,11 @@ export async function renderTransport(client, context, permissions, root, alive)
       if (!rows.length) requests.append(node("p", "No requests on this page."));
       for (const item of rows.slice(0, 20)) {
         const card = node("article");
-        card.append(node("h3", `${item.destination} · ${item.status}`),
-          node("p", `${item.registration} — ${item.vehicle_name}`),
-          node("p", `${item.purpose} · ${item.passengers} passengers`),
+        card.append(node("h3",{key:"{destination} · {status}",values:{destination:item.destination,status:item.status},labels:["status"]}),
+          rawNode("p", `${item.registration} — ${item.vehicle_name}`),
+          node("p",{key:"{purpose} · {passengers} passengers",values:{purpose:item.purpose,passengers:item.passengers}}),
           node("p", `${toMozambiqueInput(item.starts_at).replace("T", " ")} → ${toMozambiqueInput(item.ends_at).replace("T", " ")} (Mozambique)`));
-        if (permissions.view_all) card.append(node("p", `Requested by: ${item.requester_name || item.requester_id}`));
+        if (permissions.view_all) card.append(node("p",{key:"Requested by: {name}",values:{name:item.requester_name||item.requester_id}}));
         if (permissions.edit_request && !["completed", "cancelled"].includes(item.status)
             && (permissions.approve_request || item.status === "pending")
             && (permissions.view_all || item.requester_id === context.user_id)) {
