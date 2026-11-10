@@ -57,7 +57,7 @@ export function renderPortal(target, permissions, context, catalog = [], imsAcce
     top.append(icon, node('span', available ? 'Open module →' : 'Unavailable'));
     const footer = node('div'); footer.className = 'module-card-footer';
     footer.append(node('span', available ? (isIMS ? 'IMS available' : 'Transportation available') : isIMS || item.integration_status === 'transport_available' ? 'Access not assigned' : 'Integration pending'));
-    card.append(top, node('h3',item.name), node('p',({foundation:'Activities, records and shared information.',education:'Learning, sessions and attendance.',farm:'Production, resources and field operations.',logistics:'Transport, inventory and distribution.'})[item.code] || item.description),footer); target.append(card);
+    card.append(top, node('h3',item.name), node('p',({foundation:'Activities, records and shared information.',education:'Learning, sessions and attendance.',farm:'Production, resources and field operations.',logistics:'Transport operations. Warehouse integration pending.'})[item.code] || item.description),footer); target.append(card);
   }
   if (context.has_hr_access === true || context.platform_role === 'system_owner') {
     const heading=node('h2','MANAGEMENT');heading.className='management-heading';target.append(heading);
