@@ -6,7 +6,7 @@ ctx.catalog=['foundation','education','farm','logistics'].map(code=>({code,name:
 for(const role of ['system_owner','restricted_admin','member']) for(const view of [true,false]){
  ctx.target=new Element('div');ctx.permissions={view};ctx.context={platform_role:role};
  vm.runInContext('renderPortal(target,permissions,context,catalog)',ctx);
- assert.equal(ctx.target.children.length,role==='system_owner'?5:4);
+ assert.equal(ctx.target.children.filter(e=>e.tag==='a'||e.tag==='article').length,role==='system_owner'?5:4);
  const urls=ctx.target.children.filter(e=>e.tag==='a').map(e=>e.href);
  assert.equal(urls.includes('./transport.html'),view);
  assert.equal(urls.includes('./users.html'),role==='system_owner');
