@@ -11,7 +11,7 @@ const refresh = document.querySelector("#check-access");
 const logout = document.querySelector("#sign-out");
 const registerLink = document.querySelector("#register-link");
 const manageUsersLink = document.querySelector("#manage-users-link");
-const protectedPage = ["home", "users", "transport", "password", "hr", "ims"].includes(page);
+const protectedPage = ["home", "users", "transport", "password", "hr", "ims", "logistics"].includes(page);
 let modules;
 let userManagement;
 let homeTools;
@@ -158,15 +158,15 @@ logout.addEventListener("click", async () => {
 
 async function initialize() {
   try {
-    if (page === 'hr') hr = await import('./hr.js?v=20261110-i18n');
-    if (page === 'password') passwordChange = await import('./password-change.js?v=20261110-i18n');
+    if (page === 'hr') hr = await import('./hr.js?v=20261110-logistics');
+    if (page === 'password') passwordChange = await import('./password-change.js?v=20261110-logistics');
     // Import registration only where its form exists.
-    if (page === "register") registration = await import("./registration.js?v=20261110-i18n");
-    if (page === "users") userManagement = await import("./users.js?v=20261110-i18n");
-    if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js?v=20261110-i18n");
-    if (protectedPage) modules = await import("./modules.js?v=20261110-i18n");
+    if (page === "register") registration = await import("./registration.js?v=20261110-logistics");
+    if (page === "users") userManagement = await import("./users.js?v=20261110-logistics");
+    if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js?v=20261110-logistics");
+    if (protectedPage) modules = await import("./modules.js?v=20261110-logistics");
     const [config, library] = await Promise.all([
-      import("./config.js?v=20261110-i18n"),
+      import("./config.js?v=20261110-logistics"),
       import("https://esm.sh/@supabase/supabase-js@2.117.2"),
     ]);
     if (!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(config.SUPABASE_URL)

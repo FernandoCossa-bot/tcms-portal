@@ -1,4 +1,4 @@
-import {node,field,rawNode,setMessage,uiText} from './modules.js?v=20261110-i18n';
+import {node,field,rawNode,setMessage,uiText} from './modules.js?v=20261110-logistics';
 const ui=(key,values={},labels=[])=>({key,values,labels});
 const endpoint='https://dstzkaygqvxhzmefirdr.supabase.co/functions/v1/portal-bridge';
 export async function imsRequest(client,action,payload={}){

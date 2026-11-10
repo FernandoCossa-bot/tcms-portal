@@ -17,3 +17,10 @@ ctx.target=new Element('div');
 vm.runInContext('renderPortal(target,{view:false},{platform_role:"member"},catalog,true)',ctx);
 assert.equal(ctx.target.children.filter(e=>e.tag==='a').some(e=>e.href==='./ims.html'),true);
 console.log('PASS: gateway-approved IMS access links to the integrated page.');
+
+ctx.target=new Element('div');
+vm.runInContext('renderPortal(target,{view:false},{platform_role:"member"},catalog,false,true)',ctx);
+assert.equal(ctx.target.children.some(e=>e.href==='./logistics.html'),true);
+assert.equal(ctx.target.children.some(e=>e.href==='./transport.html'),false);
+assert.equal(ctx.target.children.some(e=>e.href==='./users.html'),false);
+console.log('PASS: inventory approval opens inventory without granting transport or system administration.');
