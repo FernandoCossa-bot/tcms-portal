@@ -25,7 +25,7 @@ jobs:
           node tests/ims-endpoint.test.cjs
           node tests/ims-authorization-endpoint.test.cjs
           node tests/logistics-endpoint.test.cjs
-          node tests/logistics-interface.test.cjs
+          node tests/logistics-native.test.cjs
           node tests/portal.test.cjs
           node tests/i18n.test.cjs
           node tests/hr.test.cjs

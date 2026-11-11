@@ -22,7 +22,9 @@ Deno.serve(async req=>{
   let body;try{body=JSON.parse(raw);}catch{return reply(400,{error:'Invalid request'});}
   if(!body||!actions.has(body.action))return reply(400,{error:'Unknown operation'});
   if(body.payload!==undefined&&(!body.payload||typeof body.payload!=='object'||Array.isArray(body.payload)))return reply(400,{error:'Invalid request'});
-  const payload=body.payload||{};
+  const payload={...(body.payload||{})};
+  delete payload.verified_email;
+  if(['access','request_access'].includes(body.action))payload.verified_email=user.email||null;
   if(body.action==='request_access')payload.verified_label=(context.display_name||user.email||user.id).slice(0,200);
   const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
   const result=await db.rpc('logistics_portal_dispatch',{p_actor:user.id,p_action:body.action,p_payload:payload});

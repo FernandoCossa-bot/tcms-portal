@@ -1,25 +1,27 @@
-Item Movement original interface integration — 2026-11-11
+Item Movement original application integration — 2026-11-11
 
-Source: https://github.com/adrianochivulele01/item-movement-system
-Original index.html blob: 32f9b162f67b3075ac14c29d3c58d11c9c211fb2
-Original style.css blob: b3c5e724bc70527bb4b94f5aae377872762426db
+Portal launches https://adrianochivulele01.github.io/item-movement-system/?tcms=1
+The original owner-hosted application supplies all business screens and styling.
+Its standalone login remains available when opened without the tcms parameter.
+The previous Portal-hosted logistics.html now forwards to the launch page.
 
-The Portal-served logistics.html reuses the original dashboard markup and the
-unchanged original stylesheet (css/item-movement-original.css). It is an adapted
-copy, not a redirect or an embedded version of the colleague's live website.
-The colleague's repository and independent site are not modified.
+The launch page holds the Portal session and verifies central account status.
+The module communicates only with its opener, using exact source/origin checks.
+Only the supported RPC names are translated into existing gateway operations.
+Access and refresh tokens are never sent to the original application or in URLs.
+The Portal launch tab must remain open; closing it stops further module operations.
+The gateway independently validates the Portal identity and current module access.
+Verified email comes from server-side Auth, never from the module's claims.
+Role changes resolve an existing requested identity and retain protected Owner
+and version checks. No automatic approval, added business data or changed stock.
+Original native account roles remain independent and were not modified.
 
-Portal session checking replaces the second login. Backend bridge and database
-are unchanged; all requests continue to enforce current access server-side.
-Original metrics, forms, stock table, movement table and quantity-edit prompt
-are retained. Access management selects existing Portal requests instead of local
-email-based accounts, and keeps approval, rejection, revocation, version checks
-and protected Owner handling. The original local users are not changed.
-The movement metric is labelled Recent Movements because the backend returns
-up to 500 records. User record values are rendered as text, never HTML.
-Separate integration CSS provides language/theme controls and narrow-screen
-adjustments without replacing the module stylesheet.
+Owner repository commit: e806ea1a5819f4e7225f2a8dc1c45ed6a28075ad
+Original stylesheet unchanged. Added portal-client.js and small script-only changes
+in index.html: transport selection, optimistic edit version and output escaping.
+HTML layout is unchanged. IMS remains a separate pending original-UI integration.
 
-Updates from the colleague are not automatically synchronized. Review future
-HTML/CSS changes against the source versions above before applying them.
-IMS and other modules are unchanged by this change.
+Automated verification: exact-origin/window rejection, no token disclosure,
+unknown RPC rejection, suspended Portal denial, quantity-version forwarding,
+versioned role assignment mapping, existing gateway authorization regressions,
+public-file secret/SQL checks. Live cross-origin acceptance still pending.
