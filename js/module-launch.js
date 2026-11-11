@@ -1,6 +1,6 @@
-import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './config.js?v=20261111-logistics';
+import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './config.js?v=20261111-logistics2';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.117.2';
-import {nativeLogisticsRpc} from './logistics-native-rpc.js?v=20261111-logistics';
+import {nativeLogisticsRpc} from './logistics-native-rpc.js?v=20261111-logistics2';
 const client=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const endpoint='https://nxrgqzeoylialaiplfxp.supabase.co/functions/v1/portal-bridge';
 const destination='https://adrianochivulele01.github.io/item-movement-system/?tcms=1';
@@ -8,7 +8,7 @@ const origin=new URL(destination).origin,channel='tcms-item-movement-v1';
 const status=document.querySelector('#launch-status'),button=document.querySelector('#open-module');
 let child=null,inflight=0,boundUser=null;
 async function identity(){
- const {data:{session},error}=await client.auth.getSession();if(error||!session){const e=Error('Sign in to the Portal first.');e.denied=true;throw e;}
+ const {data:{session},error}=await client.auth.getSession();if(error||!session){const signIn=document.querySelector('#launch-sign-in');if(signIn)signIn.hidden=false;const e=Error('Sign in to the Portal first.');e.denied=true;throw e;}
  if(boundUser&&boundUser!==session.user.id){const e=Error('Portal account changed. Reopen the module from the homepage.');e.denied=true;throw e;}
  boundUser=session.user.id;
  const {data:c,error:e}=await client.rpc('core_get_my_context');

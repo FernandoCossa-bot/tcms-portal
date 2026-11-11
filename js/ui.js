@@ -7,6 +7,7 @@
   if(!['en','pt','zh-Hant'].includes(lang))lang='en';
   const media=matchMedia('(prefers-color-scheme: dark)');
   const dictionary={
+"← Back to logistics":["← Voltar à logística","← 返回物流"],"Homepage":["Página inicial","首頁"],"Your warehouse workspace, connected to TCMS.":["A tua área de armazém, ligada ao TCMS.","與 TCMS 連接的倉庫工作區。"],
 "TCMS home":["Página inicial TCMS","TCMS 首頁"],
 "Logistics":["Logística", "物流"],
 "Procurement":["Aquisições", "採購"],
