@@ -1,4 +1,4 @@
-import { api, node, field, errorText, rawNode } from "./modules.js?v=20261111-native";
+import { api, node, field, errorText, rawNode } from "./modules.js?v=20261111-logistics";
 
 // Form dates are explicitly Mozambique time (UTC+02:00), independent of device timezone.
 export function toMozambiqueInput(iso) {

@@ -7,6 +7,24 @@
   if(!['en','pt','zh-Hant'].includes(lang))lang='en';
   const media=matchMedia('(prefers-color-scheme: dark)');
   const dictionary={
+"TCMS home":["Página inicial TCMS","TCMS 首頁"],
+"Logistics":["Logística", "物流"],
+"Procurement":["Aquisições", "採購"],
+"Item Movement (Warehouse)":["Movimento de Artigos (Armazém)", "物品異動（倉庫）"],
+"Choose the workspace for your next operation.":["Escolhe a área para a tua próxima operação.", "選擇下一項作業的工作區。"],
+"Transportation, warehouse and procurement.":["Transporte, armazém e aquisições.", "運輸、倉儲與採購。"],
+"Fleet, journeys and transport requests.":["Frota, viagens e pedidos de transporte.", "車隊、行程與運輸申請。"],
+"Items, stock balances and incoming or outgoing movements.":["Artigos, saldos de stock e movimentos de entrada ou saída.", "品項、庫存餘額與出入庫異動。"],
+"Purchasing and supplier coordination.":["Compras e coordenação de fornecedores.", "採購與供應商協調。"],
+"Not available yet":["Ainda não disponível", "尚未開放"],
+"Access available":["Acesso disponível", "可存取"],
+"Service unavailable":["Serviço indisponível", "服務無法使用"],
+"Open workspace →":["Abrir área →", "開啟工作區 →"],
+"View status →":["Ver estado →", "查看狀態 →"],
+"Back to access requests":["Voltar aos pedidos de acesso", "返回存取申請"],
+"Back to logistics":["Voltar à logística", "返回物流"],
+"Purchasing workflows and permissions have not been configured. No procurement records can be created here.":["Os processos de compras e as permissões ainda não foram configurados. Ainda não é possível criar registos de aquisições aqui.", "尚未設定採購流程及權限。此處目前無法建立採購紀錄。"],
+
 "Sign Out":["Terminar sessão","登出"],"Account":["Conta","帳號"],"Action":["Ação","操作"],"Type":["Tipo","類型"],
 "Item Movement & Inventory System":["Sistema de Inventário e Movimentos", "品項異動與庫存系統"],
 "Access Management (Administrator Only)":["Gestão de acessos (apenas administradores)", "存取管理（僅限管理員）"],

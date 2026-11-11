@@ -1,4 +1,4 @@
-import {node,rawNode,field,setMessage,uiText} from './modules.js?v=20261111-native';
+import {node,rawNode,field,setMessage,uiText} from './modules.js?v=20261111-logistics';
 const endpoint='https://nxrgqzeoylialaiplfxp.supabase.co/functions/v1/portal-bridge';
 export async function logisticsRequest(client,action,payload={}){
  const {data:{session}}=await client.auth.getSession();
@@ -21,4 +21,23 @@ export function renderLogisticsRequest(root,client,access,active){
   catch(e){if(active())setMessage(status,'{error}',{error:e.message},['error']);}
   finally{busy=false;save.disabled=false;}
  });
+}
+
+export async function renderLogisticsHub(root,client,permissions,active){
+ let access=null;try{access=await logisticsRequest(client,'access');}catch{}
+ if(!active())return;
+ const grid=node('div');grid.className='logistics-grid';root.append(grid);
+ const options=[
+  ['01','Transportation','Fleet, journeys and transport requests.',permissions.view===true,'./transport.html'],
+  ['02','Item Movement (Warehouse)','Items, stock balances and incoming or outgoing movements.',access?.allowed===true,'./module-launch.html'],
+  ['03','Procurement','Purchasing and supplier coordination.',false,'./procurement.html']
+ ];
+ for(const [number,title,description,allowed,url] of options){
+  const card=node('article');card.className='logistics-card';
+  const badge=node('span',number);badge.className='logistics-number';
+  const state=node('p',allowed?'Access available':number==='03'?'Not available yet':access===null&&number==='02'?'Service unavailable':'Access not assigned');state.className='logistics-state';
+  const link=node('a',allowed?'Open workspace →':number==='03'?'View status →':'Back to access requests');link.href=allowed||number==='03'?url:'./home.html';link.className='logistics-action';
+  card.append(badge,node('h2',title),node('p',description),state,link);grid.append(card);
+ }
+ if(access?.allowed!==true)renderLogisticsRequest(root,client,access,active);
 }

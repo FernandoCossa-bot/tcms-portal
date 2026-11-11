@@ -26,6 +26,7 @@ jobs:
           node tests/ims-authorization-endpoint.test.cjs
           node tests/logistics-endpoint.test.cjs
           node tests/logistics-native.test.cjs
+          node tests/logistics-hub.test.cjs
           node tests/portal.test.cjs
           node tests/i18n.test.cjs
           node tests/hr.test.cjs
@@ -48,3 +49,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+

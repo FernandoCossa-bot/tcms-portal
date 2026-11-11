@@ -8,7 +8,7 @@ for(const role of ['system_owner','restricted_admin','member']) for(const view o
  vm.runInContext('renderPortal(target,permissions,context,catalog)',ctx);
  assert.equal(ctx.target.children.filter(e=>e.tag==='a'||e.tag==='article').length,role==='system_owner'?5:4);
  const urls=ctx.target.children.filter(e=>e.tag==='a').map(e=>e.href);
- assert.equal(urls.includes('./transport.html'),view);
+ assert.equal(urls.includes('./logistics.html'),view);
  assert.equal(urls.includes('./users.html'),role==='system_owner');
  assert.equal(urls.some(u=>/^https:/.test(u)),false);
 }
@@ -20,7 +20,7 @@ console.log('PASS: gateway-approved IMS access links to the integrated page.');
 
 ctx.target=new Element('div');
 vm.runInContext('renderPortal(target,{view:false},{platform_role:"member"},catalog,false,true)',ctx);
-assert.equal(ctx.target.children.some(e=>e.href==='./module-launch.html'),true);
+assert.equal(ctx.target.children.some(e=>e.href==='./logistics.html'),true);
 assert.equal(ctx.target.children.some(e=>e.href==='./transport.html'),false);
 assert.equal(ctx.target.children.some(e=>e.href==='./users.html'),false);
 console.log('PASS: inventory approval opens inventory without granting transport or system administration.');

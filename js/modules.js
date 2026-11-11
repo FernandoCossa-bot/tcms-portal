@@ -58,7 +58,7 @@ export function renderPortal(target, permissions, context, catalog = [], imsAcce
     const available = isIMS ? imsAccess === true : item.code === 'logistics' && (inventoryAccess === true || item.integration_status === 'transport_available' && permissions.view === true);
     const card = node(available ? 'a' : 'article');
     card.className = 'module-card ' + (available ? 'transport' : 'module-unavailable');
-    if (available) card.href = isIMS ? './ims.html' : inventoryAccess ? './module-launch.html' : './transport.html';
+    if (available) card.href = isIMS ? './ims.html' : './logistics.html';
     else card.setAttribute('aria-disabled', 'true');
     const top = node('div'); top.className = 'module-card-top';
     const icon = node('span', {foundation:'◈',education:'▤',farm:'❧',logistics:'↗'}[item.code]);
@@ -66,7 +66,7 @@ export function renderPortal(target, permissions, context, catalog = [], imsAcce
     top.append(icon, node('span', available ? 'Open module →' : 'Unavailable'));
     const footer = node('div'); footer.className = 'module-card-footer';
     footer.append(node('span', available ? (isIMS ? 'IMS available' : inventoryAccess ? 'Inventory available' : 'Transportation available') : isIMS || item.integration_status === 'transport_available' ? 'Access not assigned' : 'Integration pending'));
-    card.append(top, node('h3',item.name), node('p',({foundation:'Activities, records and shared information.',education:'Learning, sessions and attendance.',farm:'Production, resources and field operations.',logistics:'Transport, inventory and stock movements.'})[item.code] || item.description),footer); target.append(card);
+    card.append(top, node('h3',item.name), node('p',({foundation:'Activities, records and shared information.',education:'Learning, sessions and attendance.',farm:'Production, resources and field operations.',logistics:'Transportation, warehouse and procurement.'})[item.code] || item.description),footer); target.append(card);
   }
   if (context.has_hr_access === true || context.platform_role === 'system_owner') {
     const heading=node('h2','MANAGEMENT');heading.className='management-heading';target.append(heading);
@@ -104,32 +104,37 @@ export async function showModules(client, context, page) {
       if (error || !Array.isArray(catalog) || catalog.length !== 4) throw new Error('Catalog unavailable');
             let imsAccess = false, imsState = null;
       try {
-        const ims = await import('./ims.js?v=20261111-native');
+        const ims = await import('./ims.js?v=20261111-logistics');
         imsState = await ims.imsRequest(client, 'access');
         imsAccess = imsState?.allowed === true;
       } catch { /* Fail closed: other modules remain usable. */ }
       if (current !== epoch) return;
       let inventoryAccess=false,inventoryState=null;
-      const logistics=await import('./logistics.js?v=20261111-native');
+      const logistics=await import('./logistics.js?v=20261111-logistics');
       try{inventoryState=await logistics.logisticsRequest(client,'access');inventoryAccess=inventoryState?.allowed===true;}catch{}
       if(current!==epoch)return;
       renderPortal(root, permissions, context, catalog, imsAccess, inventoryAccess);
       if(!inventoryAccess)logistics.renderLogisticsRequest(root,client,inventoryState,()=>current===epoch);
-      if(!imsAccess){const ims=await import('./ims.js?v=20261111-native');if(current===epoch)ims.renderIMSAccessRequest(root,client,imsState,()=>current===epoch);}
+      if(!imsAccess){const ims=await import('./ims.js?v=20261111-logistics');if(current===epoch)ims.renderIMSAccessRequest(root,client,imsState,()=>current===epoch);}
     } else if (page === "users") await directory(client, context, current, message);
     else if (page === "ims") {
-      const ims = await import('./ims.js?v=20261111-native');
+      const ims = await import('./ims.js?v=20261111-logistics');
       if (current !== epoch) return;
       await ims.showIMS(client, root, () => current === epoch);
     }
     else if(page === 'logistics'){
-      const logistics=await import('./logistics.js?v=20261111-native');
+      const logistics=await import('./logistics.js?v=20261111-logistics');
       if(current!==epoch)return;
-      window.location.replace('./module-launch.html');
+      await logistics.renderLogisticsHub(root,client,permissions,()=>current===epoch);
+    }
+    else if(page === 'procurement'){
+      const panel=node('section');panel.className='tool-card';
+      panel.append(node('h2','Procurement'),node('p','Not available yet'),node('p','Purchasing workflows and permissions have not been configured. No procurement records can be created here.'));
+      root.append(panel);
     }
     else if (page === "transport") {
       if (!permissions.view) { message.textContent = "You do not have transport access."; return; }
-      const transport = await import("./transport.js?v=20261111-native");
+      const transport = await import("./transport.js?v=20261111-logistics");
       await transport.renderTransport(client, context, permissions, root, () => current === epoch);
     }
   } catch (error) {
@@ -138,7 +143,7 @@ export async function showModules(client, context, page) {
 }
 async function directory(client, context, current, message) {
   if (context.platform_role === 'system_owner' && context.can_enter === true) {
-    const integration = await import('./integration-preparation.js?v=20261111-native');
+    const integration = await import('./integration-preparation.js?v=20261111-logistics');
     if (current !== epoch) return;
     integration.renderIntegrationPreparation(root, context);
   }
