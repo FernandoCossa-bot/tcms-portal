@@ -1,6 +1,6 @@
-import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './config.js?v=20261111-logistics2';
+import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './config.js?v=20261111-logistics4';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.117.2';
-import {nativeLogisticsRpc} from './logistics-native-rpc.js?v=20261111-logistics2';
+import {nativeLogisticsRpc} from './logistics-native-rpc.js?v=20261111-logistics4';
 const client=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const endpoint='https://nxrgqzeoylialaiplfxp.supabase.co/functions/v1/portal-bridge';
 const destination='https://adrianochivulele01.github.io/item-movement-system/?tcms=1';

@@ -1,4 +1,4 @@
-import {node,rawNode,field,setMessage,uiText} from './modules.js?v=20261111-logistics2';
+import {node,rawNode,field,setMessage,uiText} from './modules.js?v=20261111-logistics4';
 const endpoint='https://nxrgqzeoylialaiplfxp.supabase.co/functions/v1/portal-bridge';
 export async function logisticsRequest(client,action,payload={}){
  const {data:{session}}=await client.auth.getSession();

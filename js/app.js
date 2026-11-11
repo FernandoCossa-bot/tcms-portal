@@ -158,15 +158,15 @@ logout.addEventListener("click", async () => {
 
 async function initialize() {
   try {
-    if (page === 'hr') hr = await import('./hr.js?v=20261111-logistics2');
-    if (page === 'password') passwordChange = await import('./password-change.js?v=20261111-logistics2');
+    if (page === 'hr') hr = await import('./hr.js?v=20261111-logistics4');
+    if (page === 'password') passwordChange = await import('./password-change.js?v=20261111-logistics4');
     // Import registration only where its form exists.
-    if (page === "register") registration = await import("./registration.js?v=20261111-logistics2");
-    if (page === "users") userManagement = await import("./users.js?v=20261111-logistics2");
-    if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js?v=20261111-logistics2");
-    if (protectedPage) modules = await import("./modules.js?v=20261111-logistics2");
+    if (page === "register") registration = await import("./registration.js?v=20261111-logistics4");
+    if (page === "users") userManagement = await import("./users.js?v=20261111-logistics4");
+    if (["home", "users"].includes(page)) homeTools = await import("./home-tools.js?v=20261111-logistics4");
+    if (protectedPage) modules = await import("./modules.js?v=20261111-logistics4");
     const [config, library] = await Promise.all([
-      import("./config.js?v=20261111-logistics2"),
+      import("./config.js?v=20261111-logistics4"),
       import("https://esm.sh/@supabase/supabase-js@2.117.2"),
     ]);
     if (!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(config.SUPABASE_URL)

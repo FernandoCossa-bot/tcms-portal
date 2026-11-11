@@ -91,3 +91,15 @@ body[data-page=home] #auth-status{padding:6px 12px;margin-bottom:8px;font-size:.
 main a:not(.module-card):not(.skip-link){display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 17px;margin:4px 6px 4px 0;border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--blue);font-size:.88rem;font-weight:650;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}main a:not(.module-card):not(.skip-link):hover{background:var(--surface);border-color:var(--blue);transform:translateY(-1px)}main .logistics-action{align-self:flex-start}
 
 .launch-panel{margin-top:28px;padding:32px;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:var(--shadow)}.launch-navigation{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px;padding-top:22px;border-top:1px solid var(--border)}main .launch-navigation a{margin:0;padding:12px 20px;min-height:46px}.launch-navigation [hidden]{display:none!important}.module-launch-page #open-module{padding:14px 24px;border-radius:12px}.module-launch-page main{max-width:1000px}.brand-home:focus-visible{outline-offset:8px}
+
+/* Shared action palette across light and dark workspaces. */
+:root{--action:#1763bd;--action-text:#fff}
+:root[data-theme="dark"]{--action:#78ddb0;--action-text:#082b22;--blue:#78ddb0;--on-blue:#082b22}
+body button,body #sign-out,body #check-access,body #refresh-users,body #previous-users,body #next-users,
+body main a:not(.module-card):not(.skip-link),
+body .module-card:not(.module-unavailable) .module-card-top>span:last-child{
+background:var(--action);color:var(--action-text);border-color:var(--action);text-decoration:none}
+body .segmented button{background:transparent;color:var(--action);border:1px solid transparent}
+body .segmented button[aria-pressed=true]{background:var(--action);color:var(--action-text);border-color:var(--action)}
+body main a:not(.module-card):not(.skip-link):hover{background:var(--action);color:var(--action-text);filter:brightness(.94)}
+body button:disabled{opacity:.45;cursor:not-allowed}
