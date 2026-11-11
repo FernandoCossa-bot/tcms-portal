@@ -9,7 +9,7 @@ export async function nativeLogisticsRpc(request,name,p={}){
  case 'add_movement':return request('add_movement',{item_id:p.p_item_id,movement_type:p.p_movement_type,quantity:p.p_quantity});
  case 'update_movement':return request('edit_movement',{id:p.p_id,quantity:p.p_quantity,previous_quantity:p.p_previous_quantity});
  case 'list_accounts_with_roles':return (await request('queue')).map(a=>({email:a.email||a.display_name,role_name:a.role_code||a.status}));
- case 'list_history':{const [history,accounts]=await Promise.all([request('audit'),request('queue')]);return history.map(h=>({target_email:accounts.find(a=>a.portal_id===h.target)?.email||accounts.find(a=>a.portal_id===h.target)?.display_name||h.target,action:h.action,new_role:h.details?.role||'',changed_at:h.created_at}));}
+ case 'list_history':{const [history,accounts]=await Promise.all([request('audit'),request('queue')]);return history.filter(h=>['access_decision','owner_binding'].includes(h.action)).map(h=>({target_email:accounts.find(a=>a.portal_id===h.target)?.email||accounts.find(a=>a.portal_id===h.target)?.display_name||h.target,action:h.action,new_role:h.details?.role||'',changed_at:h.created_at}));}
  case 'assign_role':case 'revoke_role':{
   const accounts=await request('queue');const email=String(p.p_email||'').trim().toLowerCase();
   const a=accounts.find(a=>a.email&&a.email.toLowerCase()===email);

@@ -6,9 +6,11 @@ const endpoint='https://nxrgqzeoylialaiplfxp.supabase.co/functions/v1/portal-bri
 const destination='https://adrianochivulele01.github.io/item-movement-system/?tcms=1';
 const origin=new URL(destination).origin,channel='tcms-item-movement-v1';
 const status=document.querySelector('#launch-status'),button=document.querySelector('#open-module');
-let child=null,inflight=0;
+let child=null,inflight=0,boundUser=null;
 async function identity(){
  const {data:{session},error}=await client.auth.getSession();if(error||!session){const e=Error('Sign in to the Portal first.');e.denied=true;throw e;}
+ if(boundUser&&boundUser!==session.user.id){const e=Error('Portal account changed. Reopen the module from the homepage.');e.denied=true;throw e;}
+ boundUser=session.user.id;
  const {data:c,error:e}=await client.rpc('core_get_my_context');
  if(e||c?.user_id!==session.user.id||c.can_enter!==true){const error=Error('Portal access is not available.');error.denied=true;throw error;}
  return session;

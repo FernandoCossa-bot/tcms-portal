@@ -13,7 +13,7 @@ The Portal launch tab must remain open; closing it stops further module operatio
 The gateway independently validates the Portal identity and current module access.
 Verified email comes from server-side Auth, never from the module's claims.
 Role changes resolve an existing requested identity and retain protected Owner
-and version checks. No automatic approval, added business data or changed stock.
+and version checks. No automatic approval. Business data was preserved during installation.
 Original native account roles remain independent and were not modified.
 
 Owner repository commit: e806ea1a5819f4e7225f2a8dc1c45ed6a28075ad
@@ -24,4 +24,8 @@ HTML layout is unchanged. IMS remains a separate pending original-UI integration
 Automated verification: exact-origin/window rejection, no token disclosure,
 unknown RPC rejection, suspended Portal denial, quantity-version forwarding,
 versioned role assignment mapping, existing gateway authorization regressions,
-public-file secret/SQL checks. Live cross-origin acceptance still pending.
+public-file secret/SQL checks and rejection after Portal account switching.
+
+Live acceptance: original owner-hosted application recognized System Owner as ADMIN (L4) without a second login. Read 8 existing items and 20 movements. Created only the fictional item TCMS integration test 2026-11-11 and one IN movement of quantity 1; totals now 9 items and 21 movements. Existing records were not edited.
+Editing through the original UI remains unverified: this embedded browser does not support the original prompt() dialog. Quantity conflict forwarding passed automated tests. Common-account browser acceptance awaits user login; no access was granted automatically.
+
